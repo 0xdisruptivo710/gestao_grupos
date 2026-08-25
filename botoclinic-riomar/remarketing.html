@@ -1,0 +1,167 @@
+<!doctype html>
+<html lang="pt-BR">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Remarketing · Painel de Grupos VIP — AIOS</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Geist:wght@400;500;600&family=Geist+Mono:wght@400;500&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="../css/app.css">
+</head>
+<body data-page="remarketing">
+
+<div class="app">
+  <aside class="sidebar" id="sidebar"></aside>
+  <div class="main">
+    <header class="topbar" id="topbar"></header>
+
+    <main class="content stack" style="gap:18px">
+
+      <div class="page-head">
+        <div>
+          <h1>Disparos de remarketing</h1>
+          <p>Quem clicou e não entrou, quem entrou e não respondeu, quem viu a oferta e não comprou. Clique na linha para abrir o card com a mensagem e os anexos.</p>
+        </div>
+      </div>
+
+      <section class="grid g-4" data-od-id="kpis">
+        <div class="card kpi">
+          <div class="kpi-label">Mensagens enviadas</div>
+          <div class="kpi-value" id="k-env">—</div>
+          <div class="kpi-foot" id="k-camp"></div>
+        </div>
+        <div class="card kpi">
+          <div class="kpi-label">Respostas</div>
+          <div class="kpi-value" id="k-resp">—</div>
+          <div class="bar accent" style="margin-top:2px"><i id="k-bar" style="width:0"></i></div>
+          <div class="kpi-foot" id="k-tx"></div>
+        </div>
+        <div class="card kpi">
+          <div class="kpi-label">Vendas recuperadas</div>
+          <div class="kpi-value" id="k-vendas">—</div>
+          <div class="kpi-foot" id="k-conv"></div>
+        </div>
+        <div class="card kpi">
+          <div class="kpi-label">Receita do remarketing</div>
+          <div class="kpi-value" id="k-rec">—</div>
+          <div class="kpi-foot" id="k-tk"></div>
+        </div>
+      </section>
+
+      <section class="card card-flush" data-od-id="disparos">
+        <div class="card-head">
+          <div>
+            <h2>Disparos de recuperação</h2>
+            <p class="small muted" style="margin-top:2px">Uma linha por disparo. Clique para abrir o card inteiro.</p>
+          </div>
+        </div>
+        <div id="lista"></div>
+      </section>
+
+      <section class="card" data-od-id="desempenho">
+        <div class="card-head"><h2>Desempenho por disparo</h2></div>
+        <div class="stack" style="gap:14px" id="desempenho"></div>
+      </section>
+
+    </main>
+  </div>
+</div>
+
+<script src="client.js"></script>
+<script src="../js/store.js"></script>
+<script src="../js/app.js"></script>
+<script>
+/* ---- Tela: Remarketing --------------------------------------------------- */
+(function () {
+  var S = window.Store, A = window.AIOS;
+  var CANAIS = ['WhatsApp', 'Instagram Direct', 'SMS', 'E-mail', 'Ligação'];
+  var STATUS = ['Planejado', 'Enviado', 'Cancelado'];
+
+  S.pronto(function () {
+    if (!S.usuario()) return;
+
+    A.cards({
+      el: 'lista',
+      nome: 'remarketing',
+      area: 'Remarketing',
+      rotulo: function (i) { return i.publico; },
+      kicker: function (i) { return i.canal + ' · ' + (i.data ? A.dataBR(i.data) : 'sem data'); },
+      rotuloNovo: 'Adicionar disparo de remarketing',
+      vazio: 'Nenhum disparo de remarketing. Adicione o primeiro público a recuperar.',
+      colunas: [
+        { label: 'Data',     largura: '11%' },
+        { label: 'Público',  largura: '38%' },
+        { label: 'Canal',    largura: '13%' },
+        { label: 'Anexos',   largura: '8%' },
+        { label: 'Status',   largura: '12%' },
+        { label: 'Resultado',largura: '18%', ta: 'r' }
+      ],
+      linha: function (i) {
+        var cls = i.status === 'Enviado' ? 'ok' : i.status === 'Cancelado' ? 'danger' : 'info';
+        var tx = i.enviados ? Math.round(i.respostas / i.enviados * 100) + '%' : '—';
+        return '<td><span class="num small">' + (i.data ? A.dataBR(i.data) : '—') + '</span></td>' +
+          '<td><div class="titulo">' + (A.esc(i.publico) || '<span class="muted">Sem público definido</span>') + '</div>' +
+            '<div class="resumo">' + (A.esc(String(i.mensagem || '').split('\n')[0]) || 'sem mensagem escrita') + '</div></td>' +
+          '<td class="small muted">' + A.esc(i.canal) + '</td>' +
+          '<td>' + A.chipMidia(i) + '</td>' +
+          '<td><span class="badge dot ' + cls + '">' + A.esc(i.status) + '</span></td>' +
+          '<td class="ta-r"><span class="num small">' + i.vendas + ' vendas</span>' +
+            '<div class="small muted">' + tx + ' de resposta</div></td>';
+      },
+      campos: [
+        [{ k: 'data', label: 'Data', tipo: 'data' },
+         { k: 'canal', label: 'Canal', tipo: 'select', opcoes: CANAIS },
+         { k: 'status', label: 'Status', tipo: 'select', opcoes: STATUS }],
+        { k: 'publico', label: 'Público', dica: 'quem recebe', tipo: 'texto',
+          placeholder: 'Ex.: entrou no grupo e nunca respondeu' },
+        { k: 'mensagem', label: 'Mensagem', tipo: 'textarea', alto: true, preview: true },
+        [{ k: 'enviados', label: 'Enviados', tipo: 'num' },
+         { k: 'respostas', label: 'Respostas', tipo: 'num' },
+         { k: 'vendas', label: 'Vendas', tipo: 'num' },
+         { k: 'receita', label: 'Receita', tipo: 'brl' }]
+      ],
+      novo: function () {
+        return { data: '', publico: '', canal: 'WhatsApp', mensagem: '', status: 'Planejado',
+                 enviados: 0, respostas: 0, vendas: 0, receita: 0, midias: [] };
+      },
+      aoMudar: pinta
+    });
+
+    pinta();
+
+    function pinta() {
+      var t = S.totais(), itens = S.lista('remarketing');
+
+      document.getElementById('k-env').textContent = t.rmEnviados;
+      document.getElementById('k-camp').textContent = itens.length + ' disparos cadastrados';
+      document.getElementById('k-resp').textContent = t.rmRespostas;
+      document.getElementById('k-bar').style.width = Math.min(100, t.rmTaxa) + '%';
+      document.getElementById('k-tx').textContent = t.rmTaxa + '% de resposta';
+      document.getElementById('k-vendas').textContent = t.rmVendas;
+      document.getElementById('k-conv').textContent = t.rmRespostas
+        ? Math.round(t.rmVendas / t.rmRespostas * 100) + '% de quem respondeu comprou' : '—';
+      document.getElementById('k-rec').textContent = A.brl(t.rmReceita);
+      document.getElementById('k-tk').textContent = t.rmVendas
+        ? 'ticket ' + A.brl(t.rmReceita / t.rmVendas) : 'sem venda registrada';
+
+      var enviados = itens.filter(function (i) { return i.status === 'Enviado'; });
+      var max = Math.max.apply(null, [1].concat(enviados.map(function (i) { return Number(i.enviados) || 0; })));
+      document.getElementById('desempenho').innerHTML = enviados.length ? enviados.map(function (i) {
+        var tx = i.enviados ? Math.round(i.respostas / i.enviados * 100) : 0;
+        return '<div>' +
+          '<div style="display:flex;justify-content:space-between;gap:10px;align-items:baseline;margin-bottom:6px">' +
+            '<b style="font-size:14px;font-weight:500">' + A.esc(i.publico) + '</b>' +
+            '<span class="num small">' + tx + '% resposta · ' + i.vendas + ' vendas</span>' +
+          '</div>' +
+          '<div class="bar' + (i.vendas > 0 ? ' ok' : '') + '"><i style="width:' + (i.enviados / max * 100) + '%"></i></div>' +
+          '<div class="small muted" style="margin-top:5px">' + A.esc(i.canal) + ' · ' + i.enviados + ' enviados · ' +
+            A.brl(i.receita) + ' em receita</div>' +
+        '</div>';
+      }).join('') : '<div class="empty">Marque um disparo como “Enviado” para ver o desempenho aqui.</div>';
+    }
+  });
+})();
+</script>
+</body>
+</html>

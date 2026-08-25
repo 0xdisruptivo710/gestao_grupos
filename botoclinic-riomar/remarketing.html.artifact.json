@@ -1,0 +1,19 @@
+{
+  "version": 1,
+  "kind": "html",
+  "title": "botoclinic-riomar/remarketing.html",
+  "entry": "botoclinic-riomar/remarketing.html",
+  "renderer": "html",
+  "status": "complete",
+  "exports": [
+    "html",
+    "pdf",
+    "zip"
+  ],
+  "createdAt": "2026-07-13T00:51:33.093Z",
+  "updatedAt": "2026-07-13T00:51:33.093Z",
+  "metadata": {
+    "inferred": true,
+    "reconciled": true
+  }
+}

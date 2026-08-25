@@ -1,0 +1,84 @@
+<!doctype html>
+<html lang="pt-BR">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Painéis de Grupos VIP — AIOS</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Geist:wght@400;500;600&family=Geist+Mono:wght@400;500&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="css/app.css">
+<style>
+  /* Seletor de painel: a única tela que não tem barra lateral. */
+  .hub { min-height: 100vh; display: grid; place-items: center; padding: 32px 20px; }
+  .hub-inner { width: min(760px, 100%); }
+  .hub .brand { padding: 0 0 26px; }
+  .hub h1 { font-size: 28px; letter-spacing: -.022em; }
+  .hub > .hub-inner > p { color: var(--muted); font-size: 15px; margin: 8px 0 26px; max-width: 62ch; }
+  .hub-list { display: grid; gap: 12px; }
+  .hub-card {
+    display: flex; align-items: center; gap: 16px;
+    background: var(--surface); border: 1px solid var(--border);
+    border-radius: var(--r-md); padding: 18px 20px;
+    transition: border-color .12s, transform .08s;
+  }
+  .hub-card:hover { border-color: var(--accent); transform: translateY(-1px); }
+  .hub-card .mark {
+    width: 42px; height: 42px; border-radius: 12px; flex: none;
+    background: var(--grad); color: #fff; display: grid; place-items: center;
+    font-weight: 600; font-size: 15px; letter-spacing: -.02em;
+  }
+  .hub-card b { display: block; font-size: 16px; font-weight: 600; letter-spacing: -.01em; }
+  .hub-card span { font-size: 13px; color: var(--muted); }
+  .hub-card .go { margin-left: auto; color: var(--border); }
+  .hub-card:hover .go { color: var(--accent); }
+  .hub-card .go svg { width: 20px; height: 20px; }
+  .hub-foot { margin-top: 26px; padding-top: 18px; border-top: 1px solid var(--border); font-size: 12px; color: var(--muted); line-height: 1.7; }
+</style>
+</head>
+<body>
+
+<main class="hub">
+  <div class="hub-inner">
+    <div class="brand">
+      <div class="brand-mark">A</div>
+      <div><div class="brand-name">AIOS</div><div class="brand-sub">GRUPOS VIP</div></div>
+    </div>
+
+    <h1>Escolha o painel</h1>
+    <p>Cada cliente tem o seu. Os dados de um não aparecem no outro.</p>
+
+    <div class="hub-list">
+      <a class="hub-card" href="botoclinic-riomar/">
+        <div class="mark">BR</div>
+        <div>
+          <b>Botoclinic Riomar</b>
+          <span>Grupo VIP</span>
+        </div>
+        <span class="go">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"><path d="M9 6l6 6-6 6"/></svg>
+        </span>
+      </a>
+
+      <a class="hub-card" href="dr-colageno/">
+        <div class="mark">DC</div>
+        <div>
+          <b>Dr. Colágeno</b>
+          <span>Grupo VIP</span>
+        </div>
+        <span class="go">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"><path d="M9 6l6 6-6 6"/></svg>
+        </span>
+      </a>
+    </div>
+
+    <p class="hub-foot">
+      Os painéis são abertos, sem senha. Na barra lateral você escolhe se está editando
+      como <b>Equipe AIOS</b> ou como a equipe da clínica — é esse nome que fica no
+      histórico de alterações.
+    </p>
+  </div>
+</main>
+
+</body>
+</html>

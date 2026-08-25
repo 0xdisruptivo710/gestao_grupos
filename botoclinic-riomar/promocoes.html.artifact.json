@@ -1,0 +1,19 @@
+{
+  "version": 1,
+  "kind": "html",
+  "title": "botoclinic-riomar/promocoes.html",
+  "entry": "botoclinic-riomar/promocoes.html",
+  "renderer": "html",
+  "status": "complete",
+  "exports": [
+    "html",
+    "pdf",
+    "zip"
+  ],
+  "createdAt": "2026-07-13T00:51:32.795Z",
+  "updatedAt": "2026-07-13T00:51:32.795Z",
+  "metadata": {
+    "inferred": true,
+    "reconciled": true
+  }
+}

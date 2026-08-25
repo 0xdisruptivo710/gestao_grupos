@@ -1,0 +1,163 @@
+<!doctype html>
+<html lang="pt-BR">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Captação · Painel de Grupos VIP — AIOS</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Geist:wght@400;500;600&family=Geist+Mono:wght@400;500&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="../css/app.css">
+</head>
+<body data-page="captacao">
+
+<div class="app">
+  <aside class="sidebar" id="sidebar"></aside>
+  <div class="main">
+    <header class="topbar" id="topbar"></header>
+
+    <main class="content stack" style="gap:18px">
+
+      <div class="page-head">
+        <div>
+          <h1>Disparos para captação</h1>
+          <p>Preencha por canal o que foi investido e o que entrou. O funil abaixo e o relatório se refazem sozinhos.</p>
+        </div>
+      </div>
+
+      <section class="grid g-4" data-od-id="kpis">
+        <div class="card kpi">
+          <div class="kpi-label">Investimento</div>
+          <div class="kpi-value" id="k-inv">—</div>
+          <div class="kpi-foot" id="k-cpl"></div>
+        </div>
+        <div class="card kpi">
+          <div class="kpi-label">Leads captados</div>
+          <div class="kpi-value" id="k-leads">—</div>
+          <div class="kpi-foot" id="k-cliques"></div>
+        </div>
+        <div class="card kpi">
+          <div class="kpi-label">Entraram no grupo</div>
+          <div class="kpi-value" id="k-entradas">—</div>
+          <div class="kpi-foot" id="k-taxa"></div>
+        </div>
+        <div class="card kpi">
+          <div class="kpi-label">Membros ativos hoje</div>
+          <div class="kpi-value" id="k-membros">—</div>
+          <div class="bar accent" style="margin-top:2px"><i id="k-bar" style="width:0"></i></div>
+          <div class="kpi-foot" id="k-meta"></div>
+        </div>
+      </section>
+
+      <section class="card" data-od-id="funil">
+        <div class="card-head">
+          <div>
+            <h2>Funil de entrada</h2>
+            <p class="small muted" style="margin-top:2px">Clique → lead no CRM → entrada no grupo → membro ativo (descontadas as saídas).</p>
+          </div>
+        </div>
+        <div class="funnel" id="funil"></div>
+      </section>
+
+      <section class="card card-flush" data-od-id="canais">
+        <div class="card-head">
+          <div>
+            <h2>Canais de captação</h2>
+            <p class="small muted" style="margin-top:2px">Uma linha por canal. Clique em qualquer célula para editar.</p>
+          </div>
+        </div>
+        <div id="tabela"></div>
+      </section>
+
+    </main>
+  </div>
+</div>
+
+<script src="client.js"></script>
+<script src="../js/store.js"></script>
+<script src="../js/app.js"></script>
+<script>
+/* ---- Tela: Captação ------------------------------------------------------ */
+(function () {
+  var S = window.Store, A = window.AIOS;
+
+  S.pronto(function () {
+    if (!S.usuario()) return;
+
+    A.tabela({
+      el: 'tabela',
+      nome: 'captacao',
+      area: 'Captação',
+      rotulo: function (i) { return i.canal || 'canal sem nome'; },
+      rotuloNovo: 'Adicionar canal',
+      vazio: 'Nenhum canal de captação. Adicione o primeiro.',
+      colunas: [
+        { k: 'canal',        label: 'Canal',            tipo: 'texto', largura: '26%' },
+        { k: 'disparos',     label: 'Disparos',         tipo: 'num',   largura: '9%' },
+        { k: 'investimento', label: 'Investimento',     tipo: 'brl',   largura: '12%' },
+        { k: 'cliques',      label: 'Cliques',          tipo: 'num',   largura: '10%' },
+        { k: 'leads',        label: 'Leads',            tipo: 'num',   largura: '10%' },
+        { k: 'entradas',     label: 'Entraram',         tipo: 'num',   largura: '10%' },
+        { k: 'cpl',          label: 'Custo / lead',     tipo: 'calc',  largura: '11%',
+          calc: function (i) { return i.leads ? A.brl2(i.investimento / i.leads) : '—'; } },
+        { k: 'conv',         label: 'Lead → grupo',     tipo: 'calc',  largura: '10%',
+          calc: function (i) { return i.leads ? Math.round(i.entradas / i.leads * 100) + '%' : '—'; } }
+      ],
+      novo: function () {
+        return { canal: '', disparos: 0, investimento: 0, cliques: 0, leads: 0, entradas: 0 };
+      },
+      total: function (itens) {
+        var s = function (k) { return itens.reduce(function (a, x) { return a + (Number(x[k]) || 0); }, 0); };
+        var leads = s('leads');
+        return '<td><b>Total</b></td>' +
+          '<td class="ta-r">' + s('disparos') + '</td>' +
+          '<td class="ta-r">' + A.brl(s('investimento')) + '</td>' +
+          '<td class="ta-r">' + s('cliques') + '</td>' +
+          '<td class="ta-r">' + leads + '</td>' +
+          '<td class="ta-r">' + s('entradas') + '</td>' +
+          '<td class="ta-r">' + (leads ? A.brl2(s('investimento') / leads) : '—') + '</td>' +
+          '<td class="ta-r">' + (leads ? Math.round(s('entradas') / leads * 100) + '%' : '—') + '</td>';
+      },
+      aoMudar: pinta
+    });
+
+    pinta();
+
+    function pinta() {
+      var t = S.totais();
+
+      document.getElementById('k-inv').textContent = A.brl(t.investimento);
+      document.getElementById('k-cpl').textContent = t.leads ? A.brl2(t.custoLead) + ' por lead' : '—';
+      document.getElementById('k-leads').textContent = t.leads;
+      document.getElementById('k-cliques').textContent = t.cliques + ' cliques · ' +
+        (t.cliques ? Math.round(t.leads / t.cliques * 100) : 0) + '% viraram lead';
+      document.getElementById('k-entradas').textContent = t.entradas;
+      document.getElementById('k-taxa').textContent = t.taxaEntrada + '% dos leads entraram';
+      document.getElementById('k-membros').textContent = t.membros;
+      document.getElementById('k-bar').style.width = Math.min(100, t.pctMeta) + '%';
+      document.getElementById('k-meta').textContent = t.pctMeta + '% da meta de ' + t.metaMembros;
+
+      var etapas = [
+        { nome: 'Cliques no link',  v: t.cliques,  c: '' },
+        { nome: 'Leads captados',   v: t.leads,    c: 'b' },
+        { nome: 'Entraram no grupo',v: t.entradas, c: 'c' },
+        { nome: 'Membros ativos',   v: t.membros,  c: 'd' }
+      ];
+      var topo = etapas[0].v || 1;
+      document.getElementById('funil').innerHTML = etapas.map(function (e, i) {
+        var pct = Math.max(4, e.v / topo * 100);
+        var taxa = i === 0 ? '100%'
+          : (etapas[i - 1].v ? Math.round(e.v / etapas[i - 1].v * 100) + '%' : '—');
+        return '<div class="fn-row">' +
+          '<div class="fn-label">' + e.nome + '</div>' +
+          '<div class="fn-track"><div class="fn-fill ' + e.c + '" style="width:' + pct + '%">' +
+            '<b>' + e.v.toLocaleString('pt-BR') + '</b></div></div>' +
+          '<div class="fn-rate">' + taxa + '</div>' +
+        '</div>';
+      }).join('');
+    }
+  });
+})();
+</script>
+</body>
+</html>

@@ -1,0 +1,15 @@
+{
+  "$schema": "https://openapi.vercel.sh/vercel.json",
+  "redirects": [
+    {
+      "source": "/botoclinic-riomar",
+      "destination": "/botoclinic-riomar/",
+      "permanent": true
+    },
+    {
+      "source": "/dr-colageno",
+      "destination": "/dr-colageno/",
+      "permanent": true
+    }
+  ]
+}

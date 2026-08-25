@@ -1,0 +1,19 @@
+{
+  "version": 1,
+  "kind": "html",
+  "title": "dr-colageno/remarketing.html",
+  "entry": "dr-colageno/remarketing.html",
+  "renderer": "html",
+  "status": "complete",
+  "exports": [
+    "html",
+    "pdf",
+    "zip"
+  ],
+  "createdAt": "2026-07-13T00:51:34.974Z",
+  "updatedAt": "2026-07-13T00:51:34.974Z",
+  "metadata": {
+    "inferred": true,
+    "reconciled": true
+  }
+}

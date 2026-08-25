@@ -1,0 +1,8 @@
+{
+  "name": "aios-paineis-grupos-vip",
+  "private": true,
+  "description": "Painéis de Grupos VIP da AIOS. Site estático + uma função de servidor que fala com o banco.",
+  "engines": {
+    "node": ">=20"
+  }
+}

@@ -1,0 +1,19 @@
+{
+  "version": 1,
+  "kind": "html",
+  "title": "dr-colageno/abertura.html",
+  "entry": "dr-colageno/abertura.html",
+  "renderer": "html",
+  "status": "complete",
+  "exports": [
+    "html",
+    "pdf",
+    "zip"
+  ],
+  "createdAt": "2026-07-13T00:51:33.916Z",
+  "updatedAt": "2026-07-13T00:51:33.916Z",
+  "metadata": {
+    "inferred": true,
+    "reconciled": true
+  }
+}

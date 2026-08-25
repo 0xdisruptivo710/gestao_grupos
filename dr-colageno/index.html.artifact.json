@@ -1,0 +1,19 @@
+{
+  "version": 1,
+  "kind": "html",
+  "title": "dr-colageno/index.html",
+  "entry": "dr-colageno/index.html",
+  "renderer": "html",
+  "status": "complete",
+  "exports": [
+    "html",
+    "pdf",
+    "zip"
+  ],
+  "createdAt": "2026-07-13T00:51:34.213Z",
+  "updatedAt": "2026-07-13T00:51:34.213Z",
+  "metadata": {
+    "inferred": true,
+    "reconciled": true
+  }
+}

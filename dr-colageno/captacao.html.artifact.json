@@ -1,0 +1,19 @@
+{
+  "version": 1,
+  "kind": "html",
+  "title": "dr-colageno/captacao.html",
+  "entry": "dr-colageno/captacao.html",
+  "renderer": "html",
+  "status": "complete",
+  "exports": [
+    "html",
+    "pdf",
+    "zip"
+  ],
+  "createdAt": "2026-07-13T00:51:34.085Z",
+  "updatedAt": "2026-07-13T00:51:34.085Z",
+  "metadata": {
+    "inferred": true,
+    "reconciled": true
+  }
+}
