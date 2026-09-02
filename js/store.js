@@ -9,24 +9,23 @@
    última cópia conhecida e o banco corrige em seguida. Se a rede cair, o
    painel continua editável e sincroniza quando voltar.
 
-   Cada instalação carrega o seu client.js antes deste arquivo:
-
-     window.CLIENTE = {
-       slug: 'botoclinic-riomar',
-       cliente: 'Botoclinic Riomar',
-       grupo: 'Grupo VIP',
-       equipeCliente: 'Equipe Botoclinic'
-     };
+   De quem é este painel sai da URL, não de um arquivo copiado por cliente:
+   /botoclinic-riomar/captacao.html -> slug 'botoclinic-riomar'. A lista de
+   clientes fica em clientes.js, carregado antes deste arquivo.
 
    Sem senha, sem login. O seletor de equipe é um rótulo para o histórico.
    ========================================================================== */
 (function () {
   'use strict';
 
-  var C = window.CLIENTE || {
-    slug: 'sem-cliente', cliente: 'Cliente', grupo: 'Grupo VIP',
-    equipeCliente: 'Equipe do cliente'
-  };
+  var C = (window.Clientes && window.Clientes.atual()) || null;
+
+  /* URL que não corresponde a nenhum cliente da lista. O painel não tem como
+     adivinhar de quem é, então avisa e não grava nada. */
+  var semCliente = !C;
+  if (semCliente) {
+    C = { slug: '', cliente: 'Painel não encontrado', grupo: '', equipeCliente: 'Equipe' };
+  }
 
   var API    = '/api/painel';
   var CACHE  = 'aios:vip:' + C.slug + ':cache';
@@ -66,8 +65,10 @@
 
   var S = window.Store = {};
 
+  S.semCliente = semCliente;
+
   /* --- estado da sincronia (a barra lateral mostra) ----------------------- */
-  S.estado = 'carregando';   // carregando | ok | salvando | offline | sem-banco
+  S.estado = 'carregando';   // carregando | ok | salvando | offline | sem-banco | sem-cliente
   S.atualizadoEm = null;
   S.atualizadoPor = null;
 
@@ -125,7 +126,12 @@
       .then(function (r) {
         enviando = false;
         if (!r.ok) {
-          marcar(r.j && r.j.erro === 'banco_nao_configurado' ? 'sem-banco' : 'offline');
+          var erro = r.j && r.j.erro;
+          /* O painel não existe no banco: insistir não adianta e continuar
+             editando só acumula trabalho que não vai ser gravado. */
+          marcar(erro === 'painel_nao_encontrado' ? 'sem-painel'
+               : erro === 'banco_nao_configurado' ? 'sem-banco'
+               : 'offline');
           return;
         }
         S.atualizadoEm = r.j.atualizado_em;
@@ -142,17 +148,23 @@
 
   /* Chamado por TODA alteração. Grava no cache na hora e empurra ao banco. */
   S.salvar = function () {
+    if (semCliente) return false;
     var ok = gravarCache();
     agendar();
     return ok;   // false só quando o navegador ficou sem espaço (mídia pesada)
   };
 
   /* --- carga inicial: é o que S.pronto espera ----------------------------- */
-  var carga = fetch(API + '?slug=' + encodeURIComponent(C.slug), { cache: 'no-store' })
+  var carga = semCliente
+    ? Promise.resolve(marcar('sem-cliente'))
+    : fetch(API + '?slug=' + encodeURIComponent(C.slug), { cache: 'no-store' })
     .then(function (r) { return r.json().then(function (j) { return { ok: r.ok, j: j }; }); })
     .then(function (r) {
       if (!r.ok) {
-        marcar(r.j && r.j.erro === 'banco_nao_configurado' ? 'sem-banco' : 'offline');
+        var erro = r.j && r.j.erro;
+        marcar(erro === 'painel_nao_encontrado' ? 'sem-painel'
+             : erro === 'banco_nao_configurado' ? 'sem-banco'
+             : 'offline');
         return;
       }
       if (vazio(r.j.dados)) {
@@ -184,6 +196,7 @@
 
   /* --- ronda: o outro time mexeu? ----------------------------------------- */
   setInterval(function () {
+    if (semCliente) return;
     if (enviando || timer) return;                  // não atropela gravação minha
     fetch(API + '?slug=' + encodeURIComponent(C.slug), { cache: 'no-store' })
       .then(function (r) { return r.ok ? r.json() : null; })

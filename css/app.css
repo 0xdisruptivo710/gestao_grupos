@@ -237,6 +237,111 @@ button { cursor: pointer; background: none; border: 0; }
 .bar.accent > i { background: var(--accent); }
 .bar.ok     > i { background: var(--success); }
 
+/* ---------- 6b. Faixa de números ----------------------------------------
+   Antes cada tela abria com quatro cartões brancos idênticos. Quatro caixas
+   com o mesmo peso não são hierarquia: o olho não sabe onde pousar. Agora é
+   UMA caixa, dividida por fios. O número que importa naquela tela leva a
+   classe .destaque e é o único grande.
+   ----------------------------------------------------------------------- */
+.faixa {
+  display: grid; grid-template-columns: repeat(auto-fit, minmax(168px, 1fr));
+  background: var(--surface); border: 1px solid var(--border);
+  border-radius: var(--r-md); overflow: hidden;
+}
+.faixa > div { padding: 15px 18px; min-width: 0; }
+.faixa > div + div { box-shadow: -1px 0 0 var(--border); }
+.faixa .k { font-size: 12px; color: var(--muted); font-weight: 500; letter-spacing: .02em; }
+.faixa .v {
+  display: block; margin-top: 5px;
+  font-family: var(--mono); font-size: 22px; font-weight: 500;
+  letter-spacing: -.02em; line-height: 1.1;
+}
+.faixa .v .un { font-size: 13px; color: var(--muted); }
+.faixa .n { display: block; margin-top: 5px; font-size: 12px; color: var(--muted); }
+.faixa .bar { margin-top: 9px; }
+/* o número principal da tela */
+.faixa .destaque .v { font-size: 30px; letter-spacing: -.03em; }
+.faixa .destaque .k { color: var(--fg); }
+.faixa .vazio { color: var(--border); }
+
+/* ---------- 6c. Linha do tempo da campanha -------------------------------
+   Substitui o mosaico de seis cartões da visão geral. Seis caixas soltas
+   mostram seis números; uma lista em ordem mostra em que pé está a campanha,
+   que é a pergunta real de quem abre o painel.
+   ----------------------------------------------------------------------- */
+.etapas { background: var(--surface); border: 1px solid var(--border); border-radius: var(--r-md); overflow: hidden; }
+.etapa {
+  display: grid; grid-template-columns: 30px minmax(132px, 1fr) minmax(0, 2fr) auto 20px;
+  gap: 15px; align-items: center; padding: 15px 18px;
+  border-bottom: 1px solid var(--border); position: relative;
+  transition: background .12s;
+}
+.etapa:last-child { border-bottom: 0; }
+.etapa:hover { background: var(--surface-2); }
+
+/* o fio que liga as etapas, para ler como sequência e não como lista solta */
+.etapa::before {
+  content: ''; position: absolute; left: 32px; top: 0; bottom: 0;
+  width: 1px; background: var(--border);
+}
+.etapa:first-child::before { top: 50%; }
+.etapa:last-child::before  { bottom: 50%; }
+
+.et-ico {
+  width: 30px; height: 30px; border-radius: 50%; display: grid; place-items: center;
+  background: var(--surface); color: var(--muted);
+  border: 1px solid var(--border); position: relative; z-index: 1;
+}
+.et-ico svg { width: 15px; height: 15px; }
+.et-nome { font-size: 14px; font-weight: 500; }
+.et-estado { font-size: 13px; color: var(--muted); min-width: 0; }
+.et-num { font-family: var(--mono); font-size: 15px; white-space: nowrap; }
+.et-go { color: var(--border); display: grid; place-items: center; transition: color .12s, transform .12s; }
+.et-go svg { width: 18px; height: 18px; }
+.etapa:hover .et-go { color: var(--accent); transform: translateX(2px); }
+
+.etapa.andando .et-ico { border-color: var(--accent); color: var(--accent); background: var(--accent-bg); }
+.etapa.andando .et-num { color: var(--accent); font-weight: 500; }
+.etapa.feita   .et-ico { border-color: transparent; color: #fff; background: var(--success); }
+.etapa.parada  .et-ico { border-style: dashed; }
+.etapa.parada  .et-nome, .etapa.parada .et-num { color: var(--muted); }
+
+/* ---------- 6d. Próximo passo --------------------------------------------
+   Um painel recém-criado é uma parede de zeros. Isto diz, em uma frase, qual
+   é o próximo campo a preencher — e some sozinho quando não há mais o que
+   dizer.
+   ----------------------------------------------------------------------- */
+.proximo {
+  display: flex; align-items: center; gap: 15px; flex-wrap: wrap;
+  background: var(--accent-bg); border: 1px solid #F6C9DE;
+  border-radius: var(--r-md); padding: 15px 18px;
+}
+.proximo .px-txt { flex: 1; min-width: 220px; }
+.proximo b { display: block; font-size: 14.5px; font-weight: 600; color: #8E0B4C; }
+.proximo p { font-size: 13px; color: #A8447A; margin-top: 3px; }
+.proximo .btn { background: var(--accent); border-color: var(--accent); color: #fff; font-weight: 600; }
+.proximo .btn:hover { background: #c81269; border-color: #c81269; }
+
+/* ---------- 6e. Controle segmentado --------------------------------------
+   O filtro de tipos do catálogo de iscas usava esta classe, que nunca existiu
+   no CSS: os botões saíam como texto cru no canto do cartão.
+   ----------------------------------------------------------------------- */
+.seg {
+  display: inline-flex; align-items: center; gap: 2px; flex-wrap: wrap;
+  background: var(--surface-2); border: 1px solid var(--border);
+  border-radius: var(--r-sm); padding: 3px;
+}
+.seg button {
+  min-height: 28px; padding: 0 11px; border-radius: 6px;
+  font-size: 13px; font-weight: 500; color: var(--muted);
+  white-space: nowrap; transition: background .12s, color .12s;
+}
+.seg button:hover { color: var(--fg); }
+.seg button[aria-pressed="true"] {
+  background: var(--surface); color: var(--accent); font-weight: 600;
+  box-shadow: 0 1px 2px rgba(21, 22, 43, .07);
+}
+
 .table { width: 100%; border-collapse: collapse; }
 .table th {
   text-align: left; font-size: 11px; font-weight: 500; text-transform: uppercase;
@@ -497,6 +602,16 @@ select.cell { appearance: none; cursor: pointer; padding-right: 20px; background
   font-size: 12px; color: var(--muted); line-height: 1.6;
 }
 
+/* recado de tela inteira — painel inexistente, cliente fora da lista */
+.recado {
+  max-width: 520px; margin: 8vh auto; text-align: center;
+  background: var(--surface); border: 1px solid var(--border);
+  border-radius: var(--r-lg); padding: 34px 30px;
+}
+.recado h1 { font-size: 21px; margin-bottom: 8px; }
+.recado p { color: var(--muted); font-size: 14px; line-height: 1.6; }
+.recado .btn { margin-top: 20px; }
+
 /* linha de histórico */
 .log-row { display: flex; gap: 12px; padding: 12px 0; border-bottom: 1px solid var(--border); align-items: flex-start; }
 .log-row:last-child { border-bottom: 0; }
@@ -551,6 +666,20 @@ select.cell { appearance: none; cursor: pointer; padding-right: 20px; background
 @media (max-width: 767px) {
   h1 { font-size: 22px; }
   .g-2, .g-3, .g-4 { grid-template-columns: minmax(0, 1fr); }
+
+  /* A faixa vira duas colunas: cinco números em fila só cabem no desktop. */
+  .faixa { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+  .faixa > div + div { box-shadow: none; }
+  .faixa > div { border-top: 1px solid var(--border); }
+  .faixa > div:nth-child(-n+2) { border-top: 0; }
+  .faixa > div:nth-child(2n) { box-shadow: -1px 0 0 var(--border); }
+  .faixa .destaque { grid-column: 1 / -1; }
+
+  /* A etapa empilha: bolinha + nome em cima, estado embaixo. */
+  .etapa { grid-template-columns: 30px minmax(0, 1fr) auto; gap: 12px; }
+  .et-estado { grid-column: 2 / -1; grid-row: 2; font-size: 12.5px; }
+  .etapa::before { bottom: 0; }
+  .et-go { display: none; }
   .content { padding: 16px 14px 80px; }
   .hero { padding: 18px; }
   .hero-meta { text-align: left; }

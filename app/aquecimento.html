@@ -7,7 +7,7 @@
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link href="https://fonts.googleapis.com/css2?family=Geist:wght@400;500;600&family=Geist+Mono:wght@400;500&display=swap" rel="stylesheet">
-<link rel="stylesheet" href="../css/app.css">
+<link rel="stylesheet" href="/css/app.css">
 </head>
 <body data-page="aquecimento">
 
@@ -21,54 +21,40 @@
       <div class="page-head">
         <div>
           <h1>Aquecimento do grupo</h1>
-          <p>Tudo que nutre o grupo até a abertura. Clique em qualquer linha para abrir o card da tarefa — com o texto, as fotos e os vídeos que vão junto.</p>
+          <p>Tudo que nutre o grupo até a abertura. Clique em qualquer linha para abrir o card da tarefa, com o texto, as fotos e os vídeos que vão junto.</p>
         </div>
       </div>
 
-      <section class="grid g-4" data-od-id="kpis">
-        <div class="card kpi">
-          <div class="kpi-label">Itens planejados</div>
-          <div class="kpi-value" id="k-plan">—</div>
-          <div class="kpi-foot" id="k-plan-foot"></div>
-        </div>
-        <div class="card kpi">
-          <div class="kpi-label">Já enviados</div>
-          <div class="kpi-value" id="k-env">—</div>
-          <div class="bar accent" style="margin-top:2px"><i id="k-bar" style="width:0"></i></div>
-          <div class="kpi-foot" id="k-env-foot"></div>
-        </div>
-        <div class="card kpi">
-          <div class="kpi-label">Respostas no grupo</div>
-          <div class="kpi-value" id="k-resp">—</div>
-          <div class="kpi-foot" id="k-alcance"></div>
-        </div>
-        <div class="card kpi">
-          <div class="kpi-label">Engajamento médio</div>
-          <div class="kpi-value" id="k-eng">—</div>
-          <div class="kpi-foot">respostas ÷ alcance dos enviados</div>
-        </div>
-      </section>
+      <section id="faixa"></section>
 
-      <section class="card card-flush" data-od-id="itens">
+      <section class="card card-flush">
         <div class="card-head">
           <div>
             <h2>Calendário de nutrição</h2>
             <p class="small muted" style="margin-top:2px">Uma linha por tarefa. Clique para abrir o card inteiro.</p>
           </div>
-          <span class="badge dot" id="mix"></span>
+          <div class="seg" id="filtro" role="group" aria-label="Filtrar por status"></div>
         </div>
         <div id="lista"></div>
       </section>
 
-      <section class="grid g-3" data-od-id="por-tipo" id="por-tipo"></section>
+      <section>
+        <div class="card-head" style="margin-bottom:12px">
+          <div>
+            <h2>Engajamento por formato</h2>
+            <p class="small muted" style="margin-top:2px">Só conta o que já foi enviado e teve alcance lançado.</p>
+          </div>
+        </div>
+        <div id="por-tipo"></div>
+      </section>
 
     </main>
   </div>
 </div>
 
-<script src="client.js"></script>
-<script src="../js/store.js"></script>
-<script src="../js/app.js"></script>
+<script src="/js/clientes.js"></script>
+<script src="/js/store.js"></script>
+<script src="/js/app.js"></script>
 <script>
 /* ---- Tela: Aquecimento --------------------------------------------------- */
 (function () {
@@ -76,10 +62,12 @@
   var TIPOS = ['Mensagem', 'Enquete', 'Vídeo'];
   var STATUS = ['Planejado', 'Enviado', 'Cancelado'];
 
-  S.pronto(function () {
-    if (!S.usuario()) return;
+  var filtro = '';   // '' = todos
 
-    A.cards({
+  S.pronto(function () {
+    if (S.semCliente) return;
+
+    var lista = A.cards({
       el: 'lista',
       nome: 'aquecimento',
       area: 'Aquecimento',
@@ -87,6 +75,7 @@
       kicker: function (i) { return i.tipo + ' · ' + (i.data ? A.dataBR(i.data) : 'sem data') + ' · ' + i.hora; },
       rotuloNovo: 'Adicionar mensagem, enquete ou vídeo',
       vazio: 'Nenhum item de aquecimento. Adicione o primeiro.',
+      filtro: function (i) { return !filtro || i.status === filtro; },
       colunas: [
         { label: 'Quando',    largura: '15%' },
         { label: 'Tipo',      largura: '12%' },
@@ -121,41 +110,67 @@
         return { data: '', hora: '19:00', tipo: 'Mensagem', titulo: '', conteudo: '',
                  status: 'Planejado', alcance: 0, respostas: 0, midias: [] };
       },
-      aoMudar: pinta
+      aoMudar: function () { pinta(); montaFiltro(); }
     });
 
+    /* O filtro só oferece os status que existem na lista — botão que não
+       filtra nada é só mais um botão. */
+    function montaFiltro() {
+      var itens = S.lista('aquecimento');
+      var usados = STATUS.filter(function (st) {
+        return itens.some(function (i) { return i.status === st; });
+      });
+      var el = document.getElementById('filtro');
+      if (usados.length < 2) { el.innerHTML = ''; return; }   // nada a escolher
+      el.innerHTML =
+        '<button type="button" data-s="" aria-pressed="' + (filtro === '') + '">Todos</button>' +
+        usados.map(function (st) {
+          return '<button type="button" data-s="' + st + '" aria-pressed="' +
+            (filtro === st) + '">' + st + '</button>';
+        }).join('');
+      el.querySelectorAll('[data-s]').forEach(function (b) {
+        b.addEventListener('click', function () {
+          filtro = b.dataset.s;
+          lista.render();
+          montaFiltro();
+        });
+      });
+    }
+
+    montaFiltro();
     pinta();
 
     function pinta() {
       var t = S.totais(), itens = S.lista('aquecimento');
-      var planejados = itens.filter(function (i) { return i.status === 'Planejado'; }).length;
+      var pct = itens.length ? Math.round(t.aqEnviados / itens.length * 100) : 0;
 
-      document.getElementById('k-plan').textContent = planejados;
-      document.getElementById('k-plan-foot').textContent = 'de ' + itens.length + ' itens no total';
-      document.getElementById('k-env').textContent = t.aqEnviados;
-      document.getElementById('k-bar').style.width = (itens.length ? t.aqEnviados / itens.length * 100 : 0) + '%';
-      document.getElementById('k-env-foot').textContent = itens.length
-        ? Math.round(t.aqEnviados / itens.length * 100) + '% do plano executado' : '—';
-      document.getElementById('k-resp').textContent = t.respostas;
-      document.getElementById('k-alcance').textContent = t.alcance + ' de alcance somado';
-      document.getElementById('k-eng').innerHTML = t.engajamento + '<span class="un">%</span>';
+      A.faixa('faixa', [
+        { k: 'Engajamento médio', v: t.engajamento + '<span class="un">%</span>',
+          destaque: true, vazio: !t.alcance,
+          n: t.alcance ? t.respostas + ' respostas em ' + t.alcance.toLocaleString('pt-BR') + ' de alcance'
+                       : 'nenhum item enviado com alcance lançado' },
+        { k: 'Plano executado', v: t.aqEnviados + ' / ' + itens.length, vazio: !itens.length, barra: pct,
+          n: itens.length ? pct + '% do que foi planejado já foi ao grupo' : 'nada planejado ainda' },
+        { k: 'Respostas no grupo', v: t.respostas, vazio: !t.respostas,
+          n: 'somadas em todos os itens enviados' },
+        { k: 'Alcance somado', v: t.alcance.toLocaleString('pt-BR'), vazio: !t.alcance,
+          n: 'quantas pessoas viram os envios' }
+      ]);
 
-      document.getElementById('mix').textContent = TIPOS.map(function (tp) {
-        return itens.filter(function (i) { return i.tipo === tp; }).length + ' ' + tp.toLowerCase() + 's';
-      }).join(' · ');
-
-      document.getElementById('por-tipo').innerHTML = TIPOS.map(function (tp) {
+      /* engajamento por formato — o detalhe do número de cima */
+      A.faixa('por-tipo', TIPOS.map(function (tp) {
         var doTipo = itens.filter(function (i) { return i.tipo === tp && i.status === 'Enviado'; });
         var alc = doTipo.reduce(function (s, x) { return s + (Number(x.alcance) || 0); }, 0);
         var res = doTipo.reduce(function (s, x) { return s + (Number(x.respostas) || 0); }, 0);
         var tx = alc ? Math.round(res / alc * 100) : 0;
-        return '<div class="card kpi">' +
-          '<div class="kpi-label">' + tp + ' — engajamento</div>' +
-          '<div class="kpi-value">' + tx + '<span class="un">%</span></div>' +
-          '<div class="bar' + (tx >= 60 ? ' ok' : '') + '" style="margin-top:2px"><i style="width:' + tx + '%"></i></div>' +
-          '<div class="kpi-foot">' + doTipo.length + ' enviados · ' + res + ' respostas</div>' +
-        '</div>';
-      }).join('');
+        return {
+          k: tp, v: alc ? tx + '<span class="un">%</span>' : '—', vazio: !alc,
+          barra: alc ? tx : null,
+          n: doTipo.length
+            ? doTipo.length + (doTipo.length === 1 ? ' enviado · ' : ' enviados · ') + res + ' respostas'
+            : 'nenhum enviado'
+        };
+      }));
     }
   });
 })();

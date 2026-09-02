@@ -117,6 +117,22 @@
     var side = document.getElementById('sidebar');
     if (!side) return;
 
+    /* URL que não bate com nenhum cliente da lista. Melhor dizer isso do que
+       abrir um painel em branco que parece o de alguém. */
+    if (S.semCliente) {
+      var app = document.querySelector('.app');
+      if (app) {
+        app.outerHTML =
+          '<div class="recado">' +
+            '<h1>Painel não encontrado</h1>' +
+            '<p>O endereço <b>' + A.esc(location.pathname) + '</b> não corresponde a ' +
+            'nenhum cliente cadastrado. Confira o link ou volte para escolher um painel.</p>' +
+            '<a class="btn btn-primary" href="/">Ver todos os painéis</a>' +
+          '</div>';
+      }
+      return;
+    }
+
     var pagina = document.body.dataset.page;
     var u = S.usuario();          // painel aberto: sempre há uma equipe ativa
 
@@ -187,11 +203,15 @@
      já chegou no banco, e quando o outro time mexeu.
      ----------------------------------------------------------------------- */
   var ESTADOS = {
-    carregando: ['',      'Carregando'],
-    salvando:   ['',      'Salvando'],
-    ok:         ['ok',    'Salvo'],
-    offline:    ['aviso', 'Sem conexão'],
-    'sem-banco':['erro',  'Não está salvando']
+    carregando:  ['',      'Carregando'],
+    salvando:    ['',      'Salvando'],
+    ok:          ['ok',    'Salvo'],
+    offline:     ['aviso', 'Sem conexão'],
+    'sem-banco': ['erro',  'Não está salvando'],
+    /* O painel não existe no banco. Antes isto passava como "Salvo" e o que
+       era digitado sumia sem aviso. */
+    'sem-painel':  ['erro', 'Painel não existe no banco'],
+    'sem-cliente': ['erro', 'Endereço desconhecido']
   };
 
   /* Aberto como arquivo (pré-visualização do editor) em vez de pela URL da
@@ -699,25 +719,115 @@
     });
   };
 
-  /* ---------- countdown --------------------------------------------------- */
+  /* ---------- faixa de números ---------------------------------------------
+     Uma caixa dividida por fios, no lugar de quatro cartões brancos iguais.
+     itens: [{ k: rótulo, v: valor, n: nota, barra: 0-100, destaque, vazio }]
+     ----------------------------------------------------------------------- */
+  A.faixa = function (el, itens) {
+    el = typeof el === 'string' ? document.getElementById(el) : el;
+    if (!el) return;
+    el.className = 'faixa';
+    el.innerHTML = itens.filter(Boolean).map(function (m) {
+      return '<div' + (m.destaque ? ' class="destaque"' : '') + '>' +
+        '<span class="k">' + m.k + '</span>' +
+        '<span class="v' + (m.vazio ? ' vazio' : '') + '">' + m.v + '</span>' +
+        (m.barra != null
+          ? '<div class="bar accent"><i style="width:' + Math.max(0, Math.min(100, m.barra)) + '%"></i></div>'
+          : '') +
+        (m.n ? '<span class="n">' + m.n + '</span>' : '') +
+      '</div>';
+    }).join('');
+  };
+
+  /* ---------- linha do tempo da campanha -----------------------------------
+     A visão geral mostrava seis cartões com seis zeros. Seis zeros não contam
+     nada; o que se quer saber ao abrir o painel é em que pé está a campanha.
+     etapas: [{ nome, texto, num, href, icone, estado: parada|andando|feita }]
+     ----------------------------------------------------------------------- */
+  A.etapas = function (el, lista) {
+    el = typeof el === 'string' ? document.getElementById(el) : el;
+    if (!el) return;
+    el.className = 'etapas';
+    el.innerHTML = lista.map(function (e) {
+      return '<a class="etapa ' + e.estado + '" href="' + e.href + '">' +
+        '<span class="et-ico">' + ico(e.estado === 'feita' ? 'check' : e.icone, 15) + '</span>' +
+        '<span class="et-nome">' + A.esc(e.nome) + '</span>' +
+        '<span class="et-estado">' + e.texto + '</span>' +
+        '<span class="et-num">' + e.num + '</span>' +
+        '<span class="et-go">' + ico('chevron') + '</span>' +
+      '</a>';
+    }).join('');
+  };
+
+  /* ---------- próximo passo ------------------------------------------------
+     Painel novo é uma parede de zeros. Isto diz qual é o próximo campo a
+     preencher e some sozinho quando não há mais o que dizer.
+     ----------------------------------------------------------------------- */
+  A.proximoPasso = function (el, passo) {
+    el = typeof el === 'string' ? document.getElementById(el) : el;
+    if (!el) return;
+    if (!passo) { el.innerHTML = ''; el.hidden = true; return; }
+    el.hidden = false;
+    el.innerHTML =
+      '<div class="proximo">' +
+        '<div class="px-txt"><b>' + A.esc(passo.titulo) + '</b><p>' + A.esc(passo.texto) + '</p></div>' +
+        (passo.href ? '<a class="btn" href="' + passo.href + '">' + A.esc(passo.acao || 'Abrir') + '</a>' : '') +
+      '</div>';
+  };
+
+  /* ---------- countdown ----------------------------------------------------
+     Passada a data, o contador antigo ficava preso em "AO VIVO · abertura em
+     andamento" para sempre. Uma campanha de julho aberta em setembro anunciava
+     que estava acontecendo agora — mentira no elemento mais visível da tela.
+     Agora a janela ao vivo dura o dia da abertura; depois disso o painel
+     assume que aquilo já aconteceu.
+     ----------------------------------------------------------------------- */
+  var JANELA_AO_VIVO = 12 * 3600 * 1000;   // 12h a partir da hora marcada
+
   A.countdown = function (el) {
+    var relogio;
     function tick() {
       var alvo = new Date(S.dados.grupo.abertura).getTime();
-      if (!isFinite(alvo)) { el.innerHTML = '<div class="cd-cell"><b>—</b><span>sem data</span></div>'; return; }
-      var ms = alvo - Date.now();
-      if (ms <= 0) {
-        el.innerHTML = '<div class="cd-cell" style="min-width:auto;padding:9px 18px"><b>AO VIVO</b><span>abertura em andamento</span></div>';
+      if (!isFinite(alvo)) {
+        el.innerHTML = celula('—', 'sem data definida', true);
         return;
       }
-      var s = Math.floor(ms / 1000);
-      var d = Math.floor(s / 86400), h = Math.floor(s % 86400 / 3600),
-          m = Math.floor(s % 3600 / 60), sg = s % 60;
-      el.innerHTML = [[d, 'dias'], [h, 'horas'], [m, 'min'], [sg, 'seg']].map(function (c) {
-        return '<div class="cd-cell"><b>' + String(c[0]).padStart(2, '0') + '</b><span>' + c[1] + '</span></div>';
-      }).join('');
+      var falta = alvo - Date.now();
+
+      if (falta > 0) {
+        var s = Math.floor(falta / 1000);
+        var d = Math.floor(s / 86400), h = Math.floor(s % 86400 / 3600),
+            m = Math.floor(s % 3600 / 60), sg = s % 60;
+        el.innerHTML = [[d, 'dias'], [h, 'horas'], [m, 'min'], [sg, 'seg']].map(function (c) {
+          return '<div class="cd-cell"><b>' + String(c[0]).padStart(2, '0') + '</b><span>' + c[1] + '</span></div>';
+        }).join('');
+        return;
+      }
+
+      var passou = -falta;
+      if (passou <= JANELA_AO_VIVO) {
+        el.innerHTML = celula('AO VIVO', 'abertura acontecendo agora', true);
+        return;
+      }
+
+      /* Já era. Diz há quanto tempo, que é o que ajuda a ler o relatório. */
+      var dias = Math.floor(passou / 86400000);
+      el.innerHTML = celula(
+        dias < 1 ? 'ENCERRADA' : String(dias),
+        dias < 1 ? 'a abertura já aconteceu'
+                 : (dias === 1 ? 'dia desde a abertura' : 'dias desde a abertura'),
+        true
+      );
+      clearInterval(relogio);   // nada mais muda de segundo em segundo
     }
+
+    function celula(valor, rotulo, largo) {
+      return '<div class="cd-cell"' + (largo ? ' style="min-width:auto;padding:9px 18px"' : '') +
+        '><b>' + valor + '</b><span>' + rotulo + '</span></div>';
+    }
+
     tick();
-    setInterval(tick, 1000);
+    relogio = setInterval(tick, 1000);
   };
 
   /* Espera o DOM E o banco. Assim a tela nunca pinta com cache velho para

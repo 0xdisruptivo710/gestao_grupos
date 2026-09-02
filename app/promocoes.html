@@ -7,7 +7,7 @@
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link href="https://fonts.googleapis.com/css2?family=Geist:wght@400;500;600&family=Geist+Mono:wght@400;500&display=swap" rel="stylesheet">
-<link rel="stylesheet" href="../css/app.css">
+<link rel="stylesheet" href="/css/app.css">
 </head>
 <body data-page="promocoes">
 
@@ -26,30 +26,9 @@
         <span class="badge dot" id="status-promo"></span>
       </div>
 
-      <section class="grid g-4" data-od-id="kpis">
-        <div class="card kpi">
-          <div class="kpi-label">Produtos na oferta</div>
-          <div class="kpi-value" id="k-prod">—</div>
-          <div class="kpi-foot" id="k-desc"></div>
-        </div>
-        <div class="card kpi">
-          <div class="kpi-label">Valor médio no grupo</div>
-          <div class="kpi-value" id="k-medio">—</div>
-          <div class="kpi-foot" id="k-faixa"></div>
-        </div>
-        <div class="card kpi">
-          <div class="kpi-label">Meta de vendas na abertura</div>
-          <div class="kpi-value" id="k-meta">—</div>
-          <div class="kpi-foot">definida na Visão geral</div>
-        </div>
-        <div class="card kpi">
-          <div class="kpi-label">Receita potencial</div>
-          <div class="kpi-value" id="k-pot">—</div>
-          <div class="kpi-foot">meta de vendas × valor médio</div>
-        </div>
-      </section>
+      <section id="faixa"></section>
 
-      <section class="card card-flush" data-od-id="produtos">
+      <section class="card card-flush">
         <div class="card-head">
           <div>
             <h2>Produtos e valores</h2>
@@ -61,7 +40,7 @@
 
       <div class="grid g-2">
 
-        <section class="card" data-od-id="condicao">
+        <section class="card">
           <div class="card-head">
             <div>
               <h2>Condição da promoção</h2>
@@ -91,7 +70,7 @@
           </div>
         </section>
 
-        <section class="card" data-od-id="brinde">
+        <section class="card">
           <div class="card-head">
             <div>
               <h2>Brinde da oferta</h2>
@@ -123,16 +102,16 @@
   </div>
 </div>
 
-<script src="client.js"></script>
-<script src="../js/store.js"></script>
-<script src="../js/app.js"></script>
+<script src="/js/clientes.js"></script>
+<script src="/js/store.js"></script>
+<script src="/js/app.js"></script>
 <script>
 /* ---- Tela: Promoções ----------------------------------------------------- */
 (function () {
   var S = window.Store, A = window.AIOS;
 
   S.pronto(function () {
-    if (!S.usuario()) return;
+    if (S.semCliente) return;
 
     A.tabela({
       el: 'tab-produtos',
@@ -171,23 +150,25 @@
 
     function pinta() {
       var d = S.dados, t = S.totais();
-
-      document.getElementById('k-prod').textContent = d.produtos.length;
+      var vip = d.produtos.map(function (p) { return Number(p.vip) || 0; }).filter(Boolean);
       var comDesc = d.produtos.filter(function (p) { return p.tabela > 0; });
       var descMedio = comDesc.length
         ? Math.round(comDesc.reduce(function (s, p) { return s + (1 - p.vip / p.tabela); }, 0) / comDesc.length * 100)
         : 0;
-      document.getElementById('k-desc').textContent = comDesc.length
-        ? 'desconto médio de ' + descMedio + '%' : 'sem valores preenchidos';
 
-      document.getElementById('k-medio').textContent = A.brl(t.vipMedio);
-      var vip = d.produtos.map(function (p) { return Number(p.vip) || 0; }).filter(Boolean);
-      document.getElementById('k-faixa').textContent = vip.length
-        ? A.brl(Math.min.apply(null, vip)) + ' a ' + A.brl(Math.max.apply(null, vip))
-        : 'sem produtos com valor';
-
-      document.getElementById('k-meta').textContent = t.metaVendas;
-      document.getElementById('k-pot').textContent = A.brl(t.potencial);
+      A.faixa('faixa', [
+        { k: 'Receita potencial', v: A.brl(t.potencial), destaque: true, vazio: !t.potencial,
+          n: t.metaVendas
+            ? t.metaVendas + ' vendas da meta × valor médio de ' + A.brl(t.vipMedio)
+            : 'defina a meta de vendas na Visão geral' },
+        { k: 'Valor médio no grupo', v: A.brl(t.vipMedio), vazio: !t.vipMedio,
+          n: vip.length ? 'de ' + A.brl(Math.min.apply(null, vip)) + ' a ' + A.brl(Math.max.apply(null, vip))
+                        : 'sem produtos com valor' },
+        { k: 'Produtos na oferta', v: d.produtos.length, vazio: !d.produtos.length,
+          n: comDesc.length ? 'desconto médio de ' + descMedio + '%' : 'sem valor de tabela preenchido' },
+        { k: 'Custo do brinde', v: A.brl(t.custoBrinde), vazio: !t.custoBrinde,
+          n: d.brinde.unidades ? d.brinde.unidades + ' unidades reservadas' : 'nenhuma unidade reservada' }
+      ]);
 
       var p = d.promocao;
       var mapa = {

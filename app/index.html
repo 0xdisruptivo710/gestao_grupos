@@ -1,0 +1,286 @@
+<!doctype html>
+<html lang="pt-BR">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Visão geral · Painel de Grupos VIP — AIOS</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Geist:wght@400;500;600&family=Geist+Mono:wght@400;500&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="/css/app.css">
+</head>
+<body data-page="dashboard">
+
+<div class="app">
+  <aside class="sidebar" id="sidebar"></aside>
+  <div class="main">
+    <header class="topbar" id="topbar"></header>
+
+    <main class="content stack" style="gap:18px">
+
+      <section class="hero">
+        <div class="hero-grid">
+          <div>
+            <div class="eyebrow">Abertura do grupo</div>
+            <h2 style="font-size:24px;margin-top:4px" id="hero-data">—</h2>
+            <div class="countdown" id="countdown"></div>
+          </div>
+          <div class="hero-meta">
+            <div>
+              <div class="eyebrow">Membros no grupo</div>
+              <div class="num" id="hero-membros">—</div>
+            </div>
+            <div>
+              <div class="eyebrow">Meta atingida</div>
+              <div class="num" id="hero-pct">—</div>
+            </div>
+          </div>
+        </div>
+      </section>
+
+      <!-- Só aparece enquanto houver um passo óbvio faltando -->
+      <div id="proximo" hidden></div>
+
+      <!-- Parâmetros do grupo — a definição da campanha -->
+      <section class="card">
+        <div class="card-head">
+          <div>
+            <h2>Parâmetros do grupo</h2>
+            <p class="small muted" style="margin-top:2px">Estes campos são a base do painel inteiro. Mudou aqui, muda no relatório.</p>
+          </div>
+        </div>
+        <div class="field" style="margin-bottom:14px">
+          <label for="p-nome">Nome da campanha</label>
+          <input class="input" id="p-nome" placeholder="Ex.: Grupo VIP · Lançamento de Setembro">
+        </div>
+        <div class="grid g-4">
+          <div class="field">
+            <label for="p-abertura">Data e hora da abertura</label>
+            <input class="input input-num" id="p-abertura" type="datetime-local">
+          </div>
+          <div class="field">
+            <label for="p-meta">Meta de membros</label>
+            <input class="input input-num" id="p-meta" type="number" min="0">
+          </div>
+          <div class="field">
+            <label for="p-saidas">Saídas do grupo</label>
+            <input class="input input-num" id="p-saidas" type="number" min="0">
+          </div>
+          <div class="field">
+            <label for="p-vagas">Meta de vendas na abertura</label>
+            <input class="input input-num" id="p-vagas" type="number" min="0">
+          </div>
+        </div>
+      </section>
+
+      <!-- A campanha em ordem, não um mosaico de caixas -->
+      <section>
+        <div class="card-head" style="margin-bottom:12px">
+          <div>
+            <h2>Como está a campanha</h2>
+            <p class="small muted" style="margin-top:2px">As seis etapas na ordem em que acontecem. Clique para abrir.</p>
+          </div>
+        </div>
+        <div id="etapas"></div>
+      </section>
+
+      <!-- O dinheiro, resumido. O detalhe vive no relatório. -->
+      <section>
+        <div class="card-head" style="margin-bottom:12px">
+          <h2>O dinheiro até aqui</h2>
+          <a class="btn btn-sm" href="relatorio.html">Ver relatório</a>
+        </div>
+        <div id="dinheiro"></div>
+      </section>
+
+      <section class="card">
+        <div class="card-head">
+          <h2>Últimas alterações</h2>
+          <a class="btn btn-sm btn-ghost" href="historico.html">Ver tudo</a>
+        </div>
+        <div id="ultimas"></div>
+      </section>
+
+    </main>
+  </div>
+</div>
+
+<script src="/js/clientes.js"></script>
+<script src="/js/store.js"></script>
+<script src="/js/app.js"></script>
+<script>
+/* ---- Tela: Visão geral ---------------------------------------------------
+   Responde três perguntas, nesta ordem: quando abre, em que pé está a
+   campanha, e quanto já deu. Nada de número repetido em dois lugares.
+   ------------------------------------------------------------------------ */
+(function () {
+  var S = window.Store, A = window.AIOS;
+
+  S.pronto(function () {
+    if (S.semCliente) return;
+    A.countdown(document.getElementById('countdown'));
+
+    A.campo(document.getElementById('p-nome'),     'grupo', 'nome', 'Parâmetros', 'nome da campanha', function () {
+      pinta(); location.reload();          // a barra lateral mostra o nome
+    });
+    A.campo(document.getElementById('p-abertura'), 'grupo', 'abertura', 'Parâmetros', 'data da abertura', pinta);
+    A.campo(document.getElementById('p-meta'),     'grupo', 'metaMembros', 'Parâmetros', 'meta de membros', pinta);
+    A.campo(document.getElementById('p-saidas'),   'grupo', 'saidas', 'Parâmetros', 'saídas do grupo', pinta);
+    A.campo(document.getElementById('p-vagas'),    'grupo', 'metaVendas', 'Parâmetros', 'meta de vendas na abertura', pinta);
+
+    pinta();
+
+    function pinta() {
+      var t = S.totais(), d = S.dados;
+
+      /* ---------- topo ---------- */
+      var ab = new Date(d.grupo.abertura);
+      document.getElementById('hero-data').textContent = isFinite(ab)
+        ? ab.toLocaleDateString('pt-BR', { day: '2-digit', month: 'long' }) + ' · ' +
+          String(ab.getHours()).padStart(2, '0') + 'h' + String(ab.getMinutes()).padStart(2, '0')
+        : 'Defina a data da abertura';
+
+      document.getElementById('hero-membros').textContent = t.membros + ' / ' + t.metaMembros;
+      document.getElementById('hero-pct').textContent = t.pctMeta + '%';
+
+      /* ---------- próximo passo ----------
+         Uma frase só, a primeira que estiver faltando. Some quando a campanha
+         já tem tudo que precisa para rodar. */
+      A.proximoPasso('proximo', primeiroPasso(d, t));
+
+      /* ---------- as seis etapas ----------
+         O check verde só aparece quando a etapa realmente acabou. Ter algum
+         dado lançado não é o mesmo que estar pronta: 3 vendas de uma meta de
+         50 é uma etapa em andamento, e marcá-la como concluída faria o painel
+         mentir do mesmo jeito que o contador travado em "AO VIVO". */
+      var abertura = new Date(d.grupo.abertura);
+      var jaAbriu = isFinite(abertura) && abertura.getTime() <= Date.now();
+
+      A.etapas('etapas', [
+        {
+          nome: 'Captação', href: 'captacao.html', icone: 'funnel',
+          estado: !d.captacao.length ? 'parada'
+                : (t.metaMembros && t.membros >= t.metaMembros ? 'feita' : 'andando'),
+          texto: d.captacao.length
+            ? d.captacao.length + (d.captacao.length === 1 ? ' canal · ' : ' canais · ') +
+              t.leads + ' leads · ' + t.taxaEntrada + '% viraram membro'
+            : 'nenhum canal cadastrado',
+          num: t.entradas ? t.entradas + ' entraram' : '—'
+        },
+        {
+          nome: 'Aquecimento', href: 'aquecimento.html', icone: 'flame',
+          estado: !t.aqTotal ? 'parada' : (t.aqEnviados === t.aqTotal ? 'feita' : 'andando'),
+          texto: t.aqTotal
+            ? t.aqEnviados + ' de ' + t.aqTotal + ' itens enviados' +
+              (t.alcance ? ' · ' + t.engajamento + '% de engajamento' : ' · sem alcance lançado')
+            : 'nada planejado ainda',
+          num: t.aqTotal ? t.aqEnviados + '/' + t.aqTotal : '—'
+        },
+        {
+          nome: 'Remarketing', href: 'remarketing.html', icone: 'repeat',
+          estado: !d.remarketing.length ? 'parada'
+                : (d.remarketing.every(function (i) { return i.status !== 'Planejado'; })
+                    ? 'feita' : 'andando'),
+          texto: t.rmEnviados
+            ? t.rmEnviados + ' enviados · ' + t.rmRespostas + ' respostas · ' + t.rmVendas + ' vendas'
+            : (d.remarketing.length ? 'cadastrado, nada enviado' : 'nenhum disparo cadastrado'),
+          num: t.rmVendas ? t.rmVendas + ' vendas' : '—'
+        },
+        {
+          nome: 'Promoções', href: 'promocoes.html', icone: 'tag',
+          estado: !d.produtos.length ? 'parada' : (d.promocao.status === 'Aprovada' ? 'feita' : 'andando'),
+          texto: d.produtos.length
+            ? d.produtos.length + ' produtos · valor médio ' + A.brl(t.vipMedio) +
+              ' · promoção ' + String(d.promocao.status).toLowerCase()
+            : 'nenhum produto na oferta',
+          num: d.produtos.length ? A.brl(t.vipMedio) : '—'
+        },
+        {
+          nome: 'Iscas e Brindes', href: 'iscas.html', icone: 'gift',
+          estado: !t.iscasTotal ? 'parada'
+                : (d.iscas.some(function (i) { return i.status === 'Em análise'; }) ? 'andando' : 'feita'),
+          texto: t.iscasTotal
+            ? t.iscasAtivas + ' ativas · custo real ' + A.brl(t.custoIscas) +
+              (t.valorIscas ? ' · o grupo enxerga ' + A.brl(t.valorIscas) : '')
+            : 'nada no catálogo',
+          num: t.iscasTotal ? t.iscasAtivas + ' iscas' : '—'
+        },
+        {
+          nome: 'Dia da abertura', href: 'abertura.html', icone: 'play',
+          estado: !t.roteiroTotal && !t.vendasAbertura ? 'parada'
+                : (jaAbriu && t.roteiroTotal && t.roteiroEnviado === t.roteiroTotal ? 'feita' : 'andando'),
+          texto: t.roteiroTotal || t.vendasAbertura
+            ? t.roteiroEnviado + ' de ' + t.roteiroTotal + ' mensagens enviadas · ' +
+              t.vendasAbertura + ' de ' + t.metaVendas + ' vendas'
+            : 'roteiro vazio',
+          num: t.vendasAbertura ? A.brl(t.faturamentoAbertura) : '—'
+        }
+      ]);
+
+      /* ---------- dinheiro ---------- */
+      var resultado = t.faturamento - t.custoTotal;
+      A.faixa('dinheiro', [
+        { k: 'Faturamento', v: A.brl(t.faturamento), destaque: true, vazio: !t.faturamento,
+          n: t.compradoras
+            ? t.compradoras + ' compradoras · ticket ' + A.brl(t.ticket)
+            : 'nenhuma venda registrada' },
+        { k: 'Investido em captação', v: A.brl(t.investimento), vazio: !t.investimento,
+          n: t.leads ? A.brl2(t.custoLead) + ' por lead' : 'sem investimento lançado' },
+        { k: 'Custo de iscas e brindes', v: A.brl(t.custoIscas + t.custoBrinde),
+          vazio: !(t.custoIscas + t.custoBrinde),
+          n: t.iscasAtivas ? t.iscasAtivas + ' iscas ativas' : 'nada no catálogo' },
+        { k: 'Resultado', v: A.brl(resultado), vazio: !t.faturamento && !t.custoTotal,
+          n: t.investimento ? 'retorno de ' + t.roi.toFixed(1) + '× sobre o investido'
+                            : 'faturamento menos todos os custos' }
+      ]);
+
+      /* ---------- últimas alterações ---------- */
+      var log = d.historico.slice(0, 5);
+      document.getElementById('ultimas').innerHTML = log.length ? log.map(function (h) {
+        return '<div class="log-row">' +
+          '<div class="log-when">' + A.quando(h.quando) + '</div>' +
+          '<div class="log-body"><b>' + A.esc(h.quem) + '</b> ' +
+            '<span class="badge" style="margin-left:6px">' + A.esc(h.area) + '</span>' +
+            '<p>' + A.esc(h.acao) + '</p></div>' +
+        '</div>';
+      }).join('') : '<div class="empty">Nenhuma alteração registrada ainda.</div>';
+    }
+
+    /* A ordem aqui é a ordem em que a campanha se monta: primeiro quando abre
+       e para quantas pessoas, depois o que vender, depois como encher o grupo. */
+    function primeiroPasso(d, t) {
+      if (!d.grupo.abertura) return {
+        titulo: 'Comece pela data da abertura',
+        texto: 'É dela que saem o contador, os lembretes do roteiro e o relatório. Preencha em Parâmetros do grupo, logo abaixo.'
+      };
+      if (!t.metaMembros) return {
+        titulo: 'Defina a meta de membros',
+        texto: 'Sem meta o painel não consegue dizer se a captação está no caminho. Está em Parâmetros do grupo.'
+      };
+      if (!d.produtos.length) return {
+        titulo: 'Monte a oferta do grupo',
+        texto: 'Os produtos e o valor exclusivo são o que a campanha vai vender no dia da abertura.',
+        href: 'promocoes.html', acao: 'Abrir Promoções'
+      };
+      if (!d.captacao.length) return {
+        titulo: 'Cadastre os canais de captação',
+        texto: 'É por onde as pessoas entram no grupo. Sem isso não há funil nem custo por lead.',
+        href: 'captacao.html', acao: 'Abrir Captação'
+      };
+      if (!d.aquecimento.length) return {
+        titulo: 'Planeje o aquecimento',
+        texto: 'As mensagens, enquetes e vídeos que preparam o grupo até o dia da abertura.',
+        href: 'aquecimento.html', acao: 'Abrir Aquecimento'
+      };
+      if (!t.roteiroTotal) return {
+        titulo: 'Escreva o roteiro do dia',
+        texto: 'A sequência de mensagens da abertura, com hora marcada, para não improvisar na hora.',
+        href: 'abertura.html', acao: 'Abrir Dia da abertura'
+      };
+      return null;    /* tem tudo que precisa: o bloco some */
+    }
+  });
+})();
+</script>
+</body>
+</html>

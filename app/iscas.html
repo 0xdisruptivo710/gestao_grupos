@@ -7,7 +7,7 @@
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link href="https://fonts.googleapis.com/css2?family=Geist:wght@400;500;600&family=Geist+Mono:wght@400;500&display=swap" rel="stylesheet">
-<link rel="stylesheet" href="../css/app.css">
+<link rel="stylesheet" href="/css/app.css">
 </head>
 <body data-page="iscas">
 
@@ -25,31 +25,9 @@
         </div>
       </div>
 
-      <section class="grid g-4" data-od-id="kpis">
-        <div class="card kpi">
-          <div class="kpi-label">Iscas ativas</div>
-          <div class="kpi-value" id="k-ativas">0</div>
-          <div class="kpi-foot" id="k-ativas-foot"></div>
-        </div>
-        <div class="card kpi">
-          <div class="kpi-label">Valor percebido</div>
-          <div class="kpi-value" id="k-valor">0</div>
-          <div class="kpi-foot">o que o grupo enxerga que está ganhando</div>
-        </div>
-        <div class="card kpi">
-          <div class="kpi-label">Custo real</div>
-          <div class="kpi-value" id="k-custo">0</div>
-          <div class="kpi-foot" id="k-margem"></div>
-        </div>
-        <div class="card kpi">
-          <div class="kpi-label">Custo por venda prevista</div>
-          <div class="kpi-value" id="k-venda">0</div>
-          <div class="kpi-foot" id="k-venda-foot"></div>
-        </div>
-      </section>
+      <section id="faixa"></section>
 
-      <!-- Catálogo aberto -->
-      <section class="card card-flush" data-od-id="catalogo">
+      <section class="card card-flush">
         <div class="card-head" style="flex-wrap:wrap">
           <div>
             <h2>Catálogo de iscas</h2>
@@ -60,42 +38,28 @@
         <div id="lista"></div>
       </section>
 
-      <!-- As duas estratégias que já rodavam, agora dentro da estrutura nova -->
       <div class="grid g-main">
 
-        <section class="card card-flush" data-od-id="ranking">
+        <section class="card card-flush">
           <div class="card-head">
             <div>
               <h2>Ranking de engajamento</h2>
-              <p class="small muted" style="margin-top:2px">Pontuação manual. É a fila de aviso 10 minutos antes da abertura, e quem decide os ganhadores das iscas por engajamento.</p>
+              <p class="small muted" style="margin-top:2px">Pontuação manual. É a fila de aviso 10 minutos antes da abertura, e quem decide os ganhadores das iscas por engajamento. A posição se recalcula sozinha.</p>
             </div>
           </div>
           <div id="tab-ranking"></div>
         </section>
 
-        <div class="stack">
-          <section class="card" data-od-id="podio">
-            <div class="card-head"><h2>Pódio atual</h2></div>
-            <div id="podio"></div>
-          </section>
-
-          <section class="card" data-od-id="primeiras">
-            <div class="card-head">
-              <h2>Primeiras compradoras</h2>
-              <span class="badge" id="qtd-premios"></span>
-            </div>
-            <p class="small muted" style="margin-top:-6px;margin-bottom:12px">
-              As iscas do tipo <b>Prêmio de compra</b>, na ordem em que o grupo vai ver no dia da abertura.
-            </p>
-            <div id="fila-premios"></div>
-          </section>
-
-          <section class="card" data-od-id="brinde">
-            <div class="card-head"><h2>Brinde da oferta</h2></div>
-            <div id="brinde"></div>
-            <a class="btn btn-sm" href="promocoes.html" style="margin-top:12px">Editar em Promoções</a>
-          </section>
-        </div>
+        <section class="card">
+          <div class="card-head">
+            <h2>Fila de prêmios</h2>
+            <span class="badge" id="qtd-premios"></span>
+          </div>
+          <p class="small muted" style="margin-top:-6px;margin-bottom:12px">
+            As iscas do tipo <b>Prêmio de compra</b>, na ordem em que o grupo vai ver no dia da abertura.
+          </p>
+          <div id="fila-premios"></div>
+        </section>
 
       </div>
 
@@ -103,13 +67,15 @@
   </div>
 </div>
 
-<script src="client.js"></script>
-<script src="../js/store.js"></script>
-<script src="../js/app.js"></script>
+<script src="/js/clientes.js"></script>
+<script src="/js/store.js"></script>
+<script src="/js/app.js"></script>
 <script>
 /* ---- Tela: Iscas e Brindes ----------------------------------------------
-   Catálogo aberto. O prêmio de primeira compra e o ranking continuam, mas
-   agora como duas táticas dentro de uma estrutura que aceita qualquer outra.
+   Tinha seis blocos, e três eram cópia de dado que já estava em outro lugar:
+   o pódio repetia o ranking em outra ordem e o brinde repetia a tela de
+   Promoções. Agora o ranking mostra a posição na própria tabela e o brinde
+   virou um número na faixa, com link para onde ele é editado de verdade.
    ------------------------------------------------------------------------ */
 (function () {
   var S = window.Store, A = window.AIOS;
@@ -121,7 +87,7 @@
   var filtroTipo = '';   // '' = todos
 
   S.pronto(function () {
-    if (!S.usuario()) return;
+    if (S.semCliente) return;
 
     /* --- filtro por tipo: só mostra os tipos que existem no catálogo --- */
     function montaFiltro() {
@@ -131,6 +97,7 @@
       });
       usados.sort();
       var el = document.getElementById('filtro');
+      if (usados.length < 2) { el.innerHTML = ''; return; }   // nada a escolher
       el.innerHTML =
         '<button type="button" data-t="" aria-pressed="' + (filtroTipo === '') + '">Todas</button>' +
         usados.map(function (tp) {
@@ -198,7 +165,16 @@
       aoMudar: function () { pinta(); montaFiltro(); }
     });
 
-    A.tabela({
+    /* A tabela guarda na ordem em que foi digitada, mas isto aqui é a fila de
+       aviso de 10 minutos antes da abertura: fora de ordem não serve. Então a
+       lista é reordenada por pontos a cada alteração. */
+    function ordenaRanking() {
+      S.dados.ranking.sort(function (a, b) {
+        return (Number(b.pontos) || 0) - (Number(a.pontos) || 0);
+      });
+    }
+
+    var ranking = A.tabela({
       el: 'tab-ranking',
       nome: 'ranking',
       area: 'Iscas e Brindes',
@@ -206,54 +182,59 @@
       rotuloNovo: 'Adicionar ao ranking',
       vazio: 'Ranking vazio. Adicione as membros mais engajadas do grupo.',
       colunas: [
+        /* A posição sai dos pontos, então é calculada — não dá para digitar
+           errado, e dispensa o cartão de pódio que existia ao lado. */
+        { k: 'pos',    label: '#',                 tipo: 'calc',  largura: '8%',
+          calc: function (i) {
+            var pts = Number(i.pontos) || 0;
+            var acima = S.lista('ranking').filter(function (x) {
+              return (Number(x.pontos) || 0) > pts;
+            }).length;
+            return pts ? (acima + 1) + 'º' : '—';
+          } },
         { k: 'nome',   label: 'Membro',            tipo: 'texto', largura: '30%' },
         { k: 'pontos', label: 'Pontos',            tipo: 'num',   largura: '14%' },
-        { k: 'sinal',  label: 'Por que está aqui', tipo: 'texto', largura: '56%' }
+        { k: 'sinal',  label: 'Por que está aqui', tipo: 'texto', largura: '48%' }
       ],
       novo: function () { return { nome: '', pontos: 0, sinal: '' }; },
-      aoMudar: pinta
+      aoMudar: function () {
+        ordenaRanking();
+        ranking.render();
+        pinta();
+      }
     });
+
+    ordenaRanking();
+    ranking.render();
 
     montaFiltro();
     pinta();
 
     function pinta() {
       var d = S.dados, t = S.totais();
-
-      document.getElementById('k-ativas').textContent = t.iscasAtivas;
-      document.getElementById('k-ativas-foot').textContent =
-        'de ' + t.iscasTotal + ' cadastradas, ' +
-        d.iscas.filter(function (i) { return i.status === 'Em análise'; }).length + ' em análise';
-
-      document.getElementById('k-valor').textContent = A.brl(t.valorIscas);
-      document.getElementById('k-custo').textContent = A.brl(t.custoIscas);
-      document.getElementById('k-margem').textContent = t.custoIscas
-        ? 'o grupo enxerga ' + (t.valorIscas / t.custoIscas).toFixed(1) + '× o que custa'
-        : 'preencha o custo real';
-
+      var emAnalise = d.iscas.filter(function (i) { return i.status === 'Em análise'; }).length;
       var custoTotal = t.custoIscas + t.custoBrinde;
-      document.getElementById('k-venda').textContent = t.metaVendas
-        ? A.brl(custoTotal / t.metaVendas) : '-';
-      document.getElementById('k-venda-foot').textContent = t.metaVendas
-        ? 'iscas + brinde divididos por ' + t.metaVendas + ' vendas previstas'
-        : 'defina a meta de vendas na Visão geral';
 
-      /* pódio */
-      var top = d.ranking.slice().sort(function (a, b) { return b.pontos - a.pontos; }).slice(0, 5);
-      var max = top.length ? (top[0].pontos || 1) : 1;
-      document.getElementById('podio').innerHTML = top.length ? top.map(function (r, i) {
-        return '<div style="display:flex;gap:11px;align-items:center;padding:9px 0;' +
-          (i < top.length - 1 ? 'border-bottom:1px solid var(--border)' : '') + '">' +
-          '<div class="avatar' + (i === 0 ? ' on-grad' : '') + '" style="width:28px;height:28px;font-size:11px">' +
-            (i + 1) + '</div>' +
-          '<div style="flex:1;min-width:0">' +
-            '<div style="display:flex;justify-content:space-between;gap:8px;align-items:baseline">' +
-              '<b style="font-size:14px;font-weight:500">' + (A.esc(r.nome) || '-') + '</b>' +
-              '<span class="num small">' + r.pontos + ' pts</span></div>' +
-            '<div class="bar" style="margin-top:5px"><i style="width:' + (r.pontos / max * 100) + '%"></i></div>' +
-          '</div>' +
-        '</div>';
-      }).join('') : '<div class="empty">Sem ninguém no ranking ainda.</div>';
+      A.faixa('faixa', [
+        { k: 'Custo real do catálogo', v: A.brl(t.custoIscas), destaque: true, vazio: !t.custoIscas,
+          n: t.custoIscas
+            ? 'o grupo enxerga ' + A.brl(t.valorIscas) +
+              (t.custoIscas ? ' — ' + (t.valorIscas / t.custoIscas).toFixed(1) + '× o que custa' : '')
+            : 'preencha o custo real de cada isca' },
+        { k: 'Iscas ativas', v: t.iscasAtivas, vazio: !t.iscasTotal,
+          n: t.iscasTotal
+            ? 'de ' + t.iscasTotal + ' cadastradas · ' + emAnalise + ' em análise'
+            : 'nada no catálogo ainda' },
+        { k: 'Brinde da oferta', v: A.brl(t.custoBrinde), vazio: !t.custoBrinde,
+          n: d.brinde.nome
+            ? A.esc(d.brinde.nome) + ' · ' + (d.brinde.unidades || 0) + ' un. (editar em Promoções)'
+            : 'nenhum brinde definido em Promoções' },
+        { k: 'Custo por venda prevista', v: t.metaVendas ? A.brl(custoTotal / t.metaVendas) : '—',
+          vazio: !t.metaVendas,
+          n: t.metaVendas
+            ? 'iscas + brinde divididos por ' + t.metaVendas + ' vendas'
+            : 'defina a meta de vendas na Visão geral' }
+      ]);
 
       /* fila das primeiras compradoras — iscas do tipo Prêmio de compra */
       var premios = d.iscas.filter(function (i) {
@@ -265,23 +246,16 @@
       document.getElementById('fila-premios').innerHTML = premios.length ? premios.map(function (p, i) {
         return '<div style="display:flex;gap:11px;align-items:flex-start;padding:10px 0;' +
           (i < premios.length - 1 ? 'border-bottom:1px solid var(--border)' : '') + '">' +
+          '<div class="avatar' + (i === 0 ? ' on-grad' : '') + '" style="width:26px;height:26px;font-size:11px">' +
+            (i + 1) + '</div>' +
           '<div style="flex:1;min-width:0">' +
             '<b style="font-size:14px;font-weight:500">' + A.esc(p.nome) + '</b>' +
             '<div class="small muted">' + (A.esc(p.condicao) || 'sem condição') + '</div>' +
           '</div>' +
           '<span class="num small">' + A.brl(p.valor) + '</span>' +
         '</div>';
-      }).join('') : '<div class="empty">Nenhum prêmio de primeira compra definido.</div>';
-
-      /* brinde da oferta (vive em Promoções) */
-      document.getElementById('brinde').innerHTML =
-        '<div class="stack" style="gap:8px">' +
-          '<b style="font-size:15px;font-weight:600">' + (A.esc(d.brinde.nome) || 'Brinde não definido') + '</b>' +
-          '<div class="small muted">' + (d.brinde.unidades || 0) + ' unidades, custo unitário ' +
-            A.brl(d.brinde.custo) + '</div>' +
-          '<div class="num" style="font-size:18px">' + A.brl(t.custoBrinde) +
-            ' <span class="small muted">de custo total</span></div>' +
-        '</div>';
+      }).join('') : '<div class="empty">Nenhum prêmio de primeira compra definido. ' +
+                    'Cadastre no catálogo acima com o tipo <b>Prêmio de compra</b>.</div>';
     }
   });
 })();

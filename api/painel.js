@@ -14,7 +14,11 @@
    POST /api/painel  { slug, dados, quem }   -> grava e versiona a anterior
    ========================================================================== */
 
-const SLUGS = ['botoclinic-riomar', 'dr-colageno'];   // whitelist: nada além disto
+/* Antes havia uma lista fixa de slugs aqui, que precisava ser editada (e
+   publicada) a cada cliente novo — e esquecer disso derrubava o painel. Quem
+   manda agora é o banco: só existe painel para quem tem linha em gvip_paineis.
+   O formato continua sendo conferido para não deixar passar caminho estranho. */
+const SLUG_VALIDO = /^[a-z0-9]([a-z0-9-]{0,38}[a-z0-9])?$/;
 const VERSOES_MANTIDAS = 30;
 
 const URL = process.env.SUPABASE_URL;
@@ -43,7 +47,7 @@ module.exports = async (req, res) => {
   }
 
   const slug = (req.query?.slug || req.body?.slug || '').toString();
-  if (!SLUGS.includes(slug)) {
+  if (!SLUG_VALIDO.test(slug)) {
     return res.status(400).json({ erro: 'slug_invalido' });
   }
 
@@ -98,6 +102,17 @@ module.exports = async (req, res) => {
       });
       if (!r.ok) throw new Error('gravação falhou: ' + (await r.text()));
       const [salvo] = await r.json();
+
+      /* PATCH em linha que não existe devolve 200 com lista vazia. Sem esta
+         conferência o painel mostrava "Salvo" e o trabalho ia para o ralo:
+         slug sem linha em gvip_paineis nunca grava nada. */
+      if (!salvo) {
+        return res.status(404).json({
+          erro: 'painel_nao_encontrado',
+          detalhe: 'Não existe linha em gvip_paineis para o slug "' + slug +
+                   '". Crie o painel no banco antes de usar a tela.'
+        });
+      }
 
       /* poda: mantém só as últimas versões */
       const velhas = await rest(

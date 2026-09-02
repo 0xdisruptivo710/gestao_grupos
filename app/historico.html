@@ -7,7 +7,7 @@
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link href="https://fonts.googleapis.com/css2?family=Geist:wght@400;500;600&family=Geist+Mono:wght@400;500&display=swap" rel="stylesheet">
-<link rel="stylesheet" href="../css/app.css">
+<link rel="stylesheet" href="/css/app.css">
 </head>
 <body data-page="historico">
 
@@ -24,7 +24,7 @@
           <p>Toda inserção, edição e remoção do painel fica registrada aqui com o nome da equipe que estava editando.</p>
         </div>
         <div class="toolbar">
-          <select class="select" id="f-quem" style="width:auto" aria-label="Filtrar por pessoa">
+          <select class="select" id="f-quem" style="width:auto" aria-label="Filtrar por equipe">
             <option value="">Todas as equipes</option>
           </select>
           <select class="select" id="f-area" style="width:auto" aria-label="Filtrar por área">
@@ -33,9 +33,9 @@
         </div>
       </div>
 
-      <section class="grid g-3" data-od-id="kpis" id="kpis"></section>
+      <section id="faixa"></section>
 
-      <section class="card" data-od-id="log">
+      <section class="card">
         <div class="card-head">
           <h2>Registro completo</h2>
           <span class="badge" id="contagem"></span>
@@ -43,11 +43,11 @@
         <div id="log"></div>
       </section>
 
-      <section class="card" data-od-id="dados">
+      <section class="card">
         <div class="card-head">
           <div>
             <h2>Dados do painel</h2>
-            <p class="small muted" style="margin-top:2px">Tudo o que a equipe digita fica salvo neste navegador. Zerar apaga o conteúdo das seis áreas e mantém o histórico.</p>
+            <p class="small muted" style="margin-top:2px">O conteúdo fica no banco e as duas equipes veem a mesma coisa. Zerar limpa as seis áreas, mantém o histórico e guarda a versão anterior, que a AIOS consegue restaurar.</p>
           </div>
         </div>
         <button class="btn btn-danger" id="zerar">Zerar todos os dados do grupo</button>
@@ -57,16 +57,16 @@
   </div>
 </div>
 
-<script src="client.js"></script>
-<script src="../js/store.js"></script>
-<script src="../js/app.js"></script>
+<script src="/js/clientes.js"></script>
+<script src="/js/store.js"></script>
+<script src="/js/app.js"></script>
 <script>
 /* ---- Tela: Histórico ----------------------------------------------------- */
 (function () {
   var S = window.Store, A = window.AIOS;
 
   S.pronto(function () {
-    if (!S.usuario()) return;
+    if (S.semCliente) return;
 
     var equipe = S.equipe();
     var fQuem = document.getElementById('f-quem');
@@ -94,7 +94,8 @@
         titulo: 'Zerar todos os dados',
         corpo: '<p class="small">Isso apaga canais de captação, itens de aquecimento, remarketing, ' +
                'promoções, iscas, roteiro e vendas. O histórico de alterações é mantido.</p>' +
-               '<p class="small muted">A ação fica registrada no seu nome.</p>',
+               '<p class="small muted">A versão anterior fica guardada no banco, então nada some ' +
+               'de verdade. A ação fica registrada no seu nome.</p>',
         rodape: '<button class="btn" data-close>Cancelar</button>' +
                 '<button class="btn btn-danger" id="ok-zerar">Zerar mesmo assim</button>',
         aoAbrir: function (dr) {
@@ -113,25 +114,17 @@
     function pinta() {
       var h = S.dados.historico;
 
-      /* um card por equipe, mais o total */
-      var cards = [{
-        label: 'Alterações registradas',
-        valor: h.length,
-        foot: h.length ? 'última em ' + A.quando(h[0].quando) + ', por ' + h[0].quem : 'nenhuma ainda'
+      A.faixa('faixa', [{
+        k: 'Alterações registradas', v: h.length, destaque: true, vazio: !h.length,
+        n: h.length ? 'última em ' + A.quando(h[0].quando) + ', por ' + A.esc(h[0].quem)
+                    : 'nenhuma alteração ainda'
       }].concat(equipe.map(function (u) {
+        var n = h.filter(function (x) { return x.quemId === u.id; }).length;
         return {
-          label: 'Feitas por ' + u.nome,
-          valor: h.filter(function (x) { return x.quemId === u.id; }).length,
-          foot: u.papel
+          k: 'Feitas por ' + A.esc(u.nome), v: n, vazio: !n,
+          n: h.length ? Math.round(n / h.length * 100) + '% do total' : u.papel
         };
-      }));
-
-      document.getElementById('kpis').innerHTML = cards.map(function (c) {
-        return '<div class="card kpi">' +
-          '<div class="kpi-label">' + A.esc(c.label) + '</div>' +
-          '<div class="kpi-value">' + c.valor + '</div>' +
-          '<div class="kpi-foot">' + A.esc(c.foot) + '</div></div>';
-      }).join('');
+      })));
 
       var vis = h.filter(function (x) {
         return (!fQuem.value || x.quem === fQuem.value) && (!fArea.value || x.area === fArea.value);

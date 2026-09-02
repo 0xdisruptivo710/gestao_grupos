@@ -7,7 +7,7 @@
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link href="https://fonts.googleapis.com/css2?family=Geist:wght@400;500;600&family=Geist+Mono:wght@400;500&display=swap" rel="stylesheet">
-<link rel="stylesheet" href="../css/app.css">
+<link rel="stylesheet" href="/css/app.css">
 </head>
 <body data-page="abertura">
 
@@ -18,7 +18,7 @@
 
     <main class="content stack" style="gap:18px">
 
-      <section class="hero" data-od-id="hero">
+      <section class="hero">
         <div class="hero-grid">
           <div>
             <div class="eyebrow">Gestão do dia da abertura</div>
@@ -38,31 +38,9 @@
         </div>
       </section>
 
-      <section class="grid g-4" data-od-id="kpis">
-        <div class="card kpi">
-          <div class="kpi-label">Roteiro executado</div>
-          <div class="kpi-value" id="k-rot">—</div>
-          <div class="bar accent" style="margin-top:2px"><i id="k-bar" style="width:0"></i></div>
-          <div class="kpi-foot" id="k-rot-foot"></div>
-        </div>
-        <div class="card kpi">
-          <div class="kpi-label">Vendas registradas</div>
-          <div class="kpi-value" id="k-vendas">—</div>
-          <div class="kpi-foot" id="k-meta-foot"></div>
-        </div>
-        <div class="card kpi">
-          <div class="kpi-label">Faturamento</div>
-          <div class="kpi-value" id="k-fat">—</div>
-          <div class="kpi-foot" id="k-ticket"></div>
-        </div>
-        <div class="card kpi">
-          <div class="kpi-label">Conversão do grupo</div>
-          <div class="kpi-value" id="k-conv">—</div>
-          <div class="kpi-foot" id="k-conv-foot"></div>
-        </div>
-      </section>
+      <section id="faixa"></section>
 
-      <section class="card card-flush" data-od-id="roteiro">
+      <section class="card card-flush">
         <div class="card-head">
           <div>
             <h2>Roteiro de mensagens do dia</h2>
@@ -72,7 +50,7 @@
         <div id="lista-roteiro"></div>
       </section>
 
-      <section class="card card-flush" data-od-id="vendas">
+      <section class="card card-flush">
         <div class="card-head">
           <div>
             <h2>Vendas do dia</h2>
@@ -83,7 +61,7 @@
         <div id="tab-vendas"></div>
       </section>
 
-      <section class="card" data-od-id="por-hora">
+      <section class="card">
         <div class="card-head">
           <h2>Vendas por hora</h2>
           <span class="badge" id="pico"></span>
@@ -95,16 +73,16 @@
   </div>
 </div>
 
-<script src="client.js"></script>
-<script src="../js/store.js"></script>
-<script src="../js/app.js"></script>
+<script src="/js/clientes.js"></script>
+<script src="/js/store.js"></script>
+<script src="/js/app.js"></script>
 <script>
 /* ---- Tela: Dia da abertura ----------------------------------------------- */
 (function () {
   var S = window.Store, A = window.AIOS;
 
   S.pronto(function () {
-    if (!S.usuario()) return;
+    if (S.semCliente) return;
     A.countdown(document.getElementById('countdown'));
 
     A.cards({
@@ -151,7 +129,7 @@
         { k: 'hora',    label: 'Hora',           tipo: 'hora',  largura: '11%' },
         { k: 'nome',    label: 'Compradora',     tipo: 'texto', largura: '26%' },
         { k: 'produto', label: 'Produto',        tipo: 'texto', largura: '30%' },
-        { k: 'premio',  label: 'Isca / prêmio', tipo: 'texto', largura: '20%' },
+        { k: 'premio',  label: 'Isca / prêmio',  tipo: 'texto', largura: '20%' },
         { k: 'valor',   label: 'Valor',          tipo: 'brl',   largura: '13%' }
       ],
       novo: function () {
@@ -179,30 +157,34 @@
       document.getElementById('hero-vendas').textContent = t.vendasAbertura + ' / ' + t.metaVendas;
       document.getElementById('hero-fat').textContent = A.brl(t.faturamentoAbertura);
 
-      document.getElementById('k-rot').textContent = t.roteiroEnviado + ' / ' + t.roteiroTotal;
-      document.getElementById('k-bar').style.width =
-        (t.roteiroTotal ? t.roteiroEnviado / t.roteiroTotal * 100 : 0) + '%';
-      document.getElementById('k-rot-foot').textContent =
-        (t.roteiroTotal - t.roteiroEnviado) + ' mensagens ainda por enviar';
-
-      document.getElementById('k-vendas').textContent = t.vendasAbertura;
+      var pctRoteiro = t.roteiroTotal ? Math.round(t.roteiroEnviado / t.roteiroTotal * 100) : 0;
       var restam = Math.max(0, t.metaVendas - t.vendasAbertura);
-      document.getElementById('k-meta-foot').textContent = t.metaVendas
-        ? (restam ? restam + ' para bater a meta do dia' : 'meta do dia batida')
-        : 'sem meta definida';
+
+      A.faixa('faixa', [
+        { k: 'Faturamento do dia', v: A.brl(t.faturamentoAbertura), destaque: true, vazio: !t.faturamentoAbertura,
+          n: t.vendasAbertura
+            ? t.vendasAbertura + ' vendas · ticket ' + A.brl(t.faturamentoAbertura / t.vendasAbertura)
+            : 'nenhuma venda registrada ainda' },
+        { k: 'Roteiro executado', v: t.roteiroEnviado + ' / ' + t.roteiroTotal, vazio: !t.roteiroTotal,
+          barra: pctRoteiro,
+          n: t.roteiroTotal
+            ? (t.roteiroTotal - t.roteiroEnviado) + ' mensagens ainda por enviar'
+            : 'roteiro vazio' },
+        { k: 'Meta de vendas', v: t.metaVendas ? t.vendasAbertura + ' / ' + t.metaVendas : '—',
+          vazio: !t.metaVendas,
+          n: t.metaVendas
+            ? (restam ? restam + ' para bater a meta do dia' : 'meta do dia batida')
+            : 'defina a meta na Visão geral' },
+        { k: 'Conversão do grupo', v: t.conversao + '<span class="un">%</span>', vazio: !t.membros,
+          n: t.membros ? t.compradoras + ' compradoras de ' + t.membros + ' membros'
+                       : 'sem membros registrados' }
+      ]);
+
       document.getElementById('placar').textContent =
         t.vendasAbertura + ' de ' + t.metaVendas + ' vendas · ' +
         d.iscas.filter(function (i) {
           return i.tipo === 'Prêmio de compra' && i.status !== 'Descartado';
         }).reduce(function (s, i) { return s + (Number(i.quantidade) || 0); }, 0) + ' prêmios em jogo';
-
-      document.getElementById('k-fat').textContent = A.brl(t.faturamentoAbertura);
-      document.getElementById('k-ticket').textContent = t.vendasAbertura
-        ? 'ticket ' + A.brl(t.faturamentoAbertura / t.vendasAbertura) : 'sem venda registrada';
-
-      document.getElementById('k-conv').innerHTML = t.conversao + '<span class="un">%</span>';
-      document.getElementById('k-conv-foot').textContent = t.membros
-        ? t.compradoras + ' compradoras de ' + t.membros + ' membros' : 'sem membros registrados';
 
       var horas = {};
       d.vendas.forEach(function (v) {

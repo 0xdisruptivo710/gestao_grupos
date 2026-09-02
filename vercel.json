@@ -2,14 +2,19 @@
   "$schema": "https://openapi.vercel.sh/vercel.json",
   "redirects": [
     {
-      "source": "/botoclinic-riomar",
-      "destination": "/botoclinic-riomar/",
-      "permanent": true
+      "source": "/:cliente([a-z0-9][a-z0-9-]*)",
+      "destination": "/:cliente/",
+      "permanent": false
+    }
+  ],
+  "rewrites": [
+    {
+      "source": "/:cliente([a-z0-9][a-z0-9-]*)/",
+      "destination": "/app/index.html"
     },
     {
-      "source": "/dr-colageno",
-      "destination": "/dr-colageno/",
-      "permanent": true
+      "source": "/:cliente([a-z0-9][a-z0-9-]*)/:tela([a-z-]+).html",
+      "destination": "/app/:tela.html"
     }
   ]
 }

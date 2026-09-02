@@ -1,11 +1,5 @@
-# Fonte, não vai para o ar. As pastas dos clientes são geradas por ./build.sh
-_app
-clients
-build.sh
+# Documentação e ferramentas não precisam ir para o ar.
 README.md
-brand-spec.md
-
-# Lixo que não é do projeto
-Python
+.gstack
 .od-skills
 .mcp.json

@@ -7,7 +7,7 @@
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link href="https://fonts.googleapis.com/css2?family=Geist:wght@400;500;600&family=Geist+Mono:wght@400;500&display=swap" rel="stylesheet">
-<link rel="stylesheet" href="../css/app.css">
+<link rel="stylesheet" href="/css/app.css">
 </head>
 <body data-page="captacao">
 
@@ -21,35 +21,14 @@
       <div class="page-head">
         <div>
           <h1>Disparos para captação</h1>
-          <p>Preencha por canal o que foi investido e o que entrou. O funil abaixo e o relatório se refazem sozinhos.</p>
+          <p>Preencha por canal o que foi investido e o que entrou. O funil e o relatório se refazem sozinhos.</p>
         </div>
       </div>
 
-      <section class="grid g-4" data-od-id="kpis">
-        <div class="card kpi">
-          <div class="kpi-label">Investimento</div>
-          <div class="kpi-value" id="k-inv">—</div>
-          <div class="kpi-foot" id="k-cpl"></div>
-        </div>
-        <div class="card kpi">
-          <div class="kpi-label">Leads captados</div>
-          <div class="kpi-value" id="k-leads">—</div>
-          <div class="kpi-foot" id="k-cliques"></div>
-        </div>
-        <div class="card kpi">
-          <div class="kpi-label">Entraram no grupo</div>
-          <div class="kpi-value" id="k-entradas">—</div>
-          <div class="kpi-foot" id="k-taxa"></div>
-        </div>
-        <div class="card kpi">
-          <div class="kpi-label">Membros ativos hoje</div>
-          <div class="kpi-value" id="k-membros">—</div>
-          <div class="bar accent" style="margin-top:2px"><i id="k-bar" style="width:0"></i></div>
-          <div class="kpi-foot" id="k-meta"></div>
-        </div>
-      </section>
+      <!-- Custo. As contagens do funil não se repetem aqui. -->
+      <section id="faixa"></section>
 
-      <section class="card" data-od-id="funil">
+      <section class="card">
         <div class="card-head">
           <div>
             <h2>Funil de entrada</h2>
@@ -59,7 +38,7 @@
         <div class="funnel" id="funil"></div>
       </section>
 
-      <section class="card card-flush" data-od-id="canais">
+      <section class="card card-flush">
         <div class="card-head">
           <div>
             <h2>Canais de captação</h2>
@@ -73,16 +52,19 @@
   </div>
 </div>
 
-<script src="client.js"></script>
-<script src="../js/store.js"></script>
-<script src="../js/app.js"></script>
+<script src="/js/clientes.js"></script>
+<script src="/js/store.js"></script>
+<script src="/js/app.js"></script>
 <script>
-/* ---- Tela: Captação ------------------------------------------------------ */
+/* ---- Tela: Captação ------------------------------------------------------
+   A faixa de cima só mostra dinheiro; contagem de gente é o funil que conta,
+   logo abaixo. Antes os dois diziam a mesma coisa em duas alturas da tela.
+   ------------------------------------------------------------------------ */
 (function () {
   var S = window.Store, A = window.AIOS;
 
   S.pronto(function () {
-    if (!S.usuario()) return;
+    if (S.semCliente) return;
 
     A.tabela({
       el: 'tabela',
@@ -126,16 +108,18 @@
     function pinta() {
       var t = S.totais();
 
-      document.getElementById('k-inv').textContent = A.brl(t.investimento);
-      document.getElementById('k-cpl').textContent = t.leads ? A.brl2(t.custoLead) + ' por lead' : '—';
-      document.getElementById('k-leads').textContent = t.leads;
-      document.getElementById('k-cliques').textContent = t.cliques + ' cliques · ' +
-        (t.cliques ? Math.round(t.leads / t.cliques * 100) : 0) + '% viraram lead';
-      document.getElementById('k-entradas').textContent = t.entradas;
-      document.getElementById('k-taxa').textContent = t.taxaEntrada + '% dos leads entraram';
-      document.getElementById('k-membros').textContent = t.membros;
-      document.getElementById('k-bar').style.width = Math.min(100, t.pctMeta) + '%';
-      document.getElementById('k-meta').textContent = t.pctMeta + '% da meta de ' + t.metaMembros;
+      A.faixa('faixa', [
+        { k: 'Investido em captação', v: A.brl(t.investimento), destaque: true, vazio: !t.investimento,
+          n: t.investimento ? 'somado em ' + S.lista('captacao').length + ' canais' : 'nada lançado ainda' },
+        { k: 'Custo por lead', v: t.leads ? A.brl2(t.custoLead) : '—', vazio: !t.leads,
+          n: t.leads ? t.leads + ' leads captados' : 'sem leads registrados' },
+        { k: 'Custo por membro', v: t.entradas ? A.brl2(t.investimento / t.entradas) : '—', vazio: !t.entradas,
+          n: t.entradas ? t.entradas + ' entraram no grupo' : 'ninguém entrou ainda' },
+        { k: 'Meta de membros', v: t.pctMeta + '%', vazio: !t.metaMembros, barra: t.pctMeta,
+          n: t.metaMembros
+            ? t.membros + ' de ' + t.metaMembros + ' · faltam ' + Math.max(0, t.metaMembros - t.membros)
+            : 'defina a meta na Visão geral' }
+      ]);
 
       var etapas = [
         { nome: 'Cliques no link',  v: t.cliques,  c: '' },

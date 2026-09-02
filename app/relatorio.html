@@ -7,7 +7,7 @@
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link href="https://fonts.googleapis.com/css2?family=Geist:wght@400;500;600&family=Geist+Mono:wght@400;500&display=swap" rel="stylesheet">
-<link rel="stylesheet" href="../css/app.css">
+<link rel="stylesheet" href="/css/app.css">
 </head>
 <body data-page="relatorio">
 
@@ -19,7 +19,7 @@
     <main class="content report">
 
       <!-- Cabeçalho do documento -->
-      <header class="rpt-masthead" data-od-id="masthead">
+      <header class="rpt-masthead">
         <div>
           <h1 id="m-cliente">Relatório</h1>
           <p class="sub" id="m-sub"></p>
@@ -28,7 +28,7 @@
       </header>
 
       <!-- O resultado: um número decisivo, e a conta que leva até ele -->
-      <section class="rpt-result" data-od-id="resultado">
+      <section class="rpt-result">
         <div>
           <div class="eyebrow">Faturamento do grupo</div>
           <div class="rpt-big" id="r-fat">R$ 0</div>
@@ -37,10 +37,10 @@
         <div class="ledger" id="ledger"></div>
       </section>
 
-      <section class="rpt-strip" data-od-id="metricas" id="strip"></section>
+      <section class="rpt-strip" id="strip"></section>
 
       <!-- Funil -->
-      <section class="rpt-sec" data-od-id="funil">
+      <section class="rpt-sec">
         <div class="rpt-sec-head">
           <h2>Do clique à compra</h2>
         </div>
@@ -49,7 +49,7 @@
       </section>
 
       <!-- Captação -->
-      <section class="rpt-sec" data-od-id="captacao">
+      <section class="rpt-sec">
         <div class="rpt-sec-head">
           <h2>Captação</h2>
           <a href="captacao.html">Editar</a>
@@ -66,7 +66,7 @@
       </section>
 
       <!-- Aquecimento -->
-      <section class="rpt-sec" data-od-id="aquecimento">
+      <section class="rpt-sec">
         <div class="rpt-sec-head">
           <h2>Aquecimento</h2>
           <a href="aquecimento.html">Editar</a>
@@ -82,7 +82,7 @@
       </section>
 
       <!-- Remarketing -->
-      <section class="rpt-sec" data-od-id="remarketing">
+      <section class="rpt-sec">
         <div class="rpt-sec-head">
           <h2>Remarketing</h2>
           <a href="remarketing.html">Editar</a>
@@ -100,7 +100,7 @@
 
       <!-- Oferta e prêmios, lado a lado -->
       <div class="grid g-2" style="gap:40px">
-        <section class="rpt-sec" data-od-id="oferta" style="border-bottom:0;padding-bottom:0">
+        <section class="rpt-sec" style="border-bottom:0;padding-bottom:0">
           <div class="rpt-sec-head">
             <h2>A oferta</h2>
             <a href="promocoes.html">Editar</a>
@@ -109,7 +109,7 @@
           <div class="dl" id="dl-oferta"></div>
         </section>
 
-        <section class="rpt-sec" data-od-id="iscas" style="border-bottom:0;padding-bottom:0">
+        <section class="rpt-sec" style="border-bottom:0;padding-bottom:0">
           <div class="rpt-sec-head">
             <h2>Iscas e brindes</h2>
             <a href="iscas.html">Editar</a>
@@ -120,7 +120,7 @@
       </div>
 
       <!-- Vendas -->
-      <section class="rpt-sec" data-od-id="vendas" style="border-top:1px solid var(--border);margin-top:30px">
+      <section class="rpt-sec" style="border-top:1px solid var(--border);margin-top:30px">
         <div class="rpt-sec-head">
           <h2>O dia da abertura</h2>
           <a href="abertura.html">Editar</a>
@@ -141,9 +141,9 @@
   </div>
 </div>
 
-<script src="client.js"></script>
-<script src="../js/store.js"></script>
-<script src="../js/app.js"></script>
+<script src="/js/clientes.js"></script>
+<script src="/js/store.js"></script>
+<script src="/js/app.js"></script>
 <script>
 /* ---- Tela: Relatório -----------------------------------------------------
    Documento, não painel. Tudo aqui é derivado do que foi digitado nas seis
@@ -154,8 +154,8 @@
   var VAZIO = '<span class="muted">-</span>';
 
   S.pronto(function () {
+    if (S.semCliente) return;
     var u = S.usuario();
-    if (!u) return;
     var d = S.dados, t = S.totais();
 
     /* ---------- cabeçalho ---------- */
