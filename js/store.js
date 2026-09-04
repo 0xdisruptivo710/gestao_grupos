@@ -118,7 +118,7 @@
   var pendente = null, timer = null, enviando = false;
 
   function enviar() {
-    if (enviando) { agendar(); return; }
+    if (enviando) { agendar(); return Promise.resolve(false); }
     enviando = true;
     marcar('salvando');
     var corpo = JSON.stringify({
@@ -126,7 +126,7 @@
       dados: S.dados,
       quem: S.usuario().nome
     });
-    fetch(API, { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: corpo })
+    return fetch(API, { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: corpo })
       .then(function (r) { return r.json().then(function (j) { return { ok: r.ok, j: j }; }); })
       .then(function (r) {
         enviando = false;
@@ -137,13 +137,14 @@
           marcar(erro === 'painel_nao_encontrado' ? 'sem-painel'
                : erro === 'banco_nao_configurado' ? 'sem-banco'
                : 'offline');
-          return;
+          return false;
         }
         S.atualizadoEm = r.j.atualizado_em;
         S.atualizadoPor = r.j.atualizado_por;
         marcar('ok');
+        return true;
       })
-      .catch(function () { enviando = false; marcar('offline'); });
+      .catch(function () { enviando = false; marcar('offline'); return false; });
   }
 
   function agendar() {
@@ -157,6 +158,21 @@
     var ok = gravarCache();
     agendar();
     return ok;   // false só quando o navegador ficou sem espaço (mídia pesada)
+  };
+
+  /* Grava agora e devolve promessa.
+
+     A gravação normal espera 900 ms para não mandar uma requisição por tecla
+     digitada. Quem recarrega a página logo depois de alterar (trocar o nome da
+     campanha, zerar o painel, aplicar o roteiro padrão) matava esse timer antes
+     de ele disparar: a tela dizia que salvou e a alteração ficava só no cache
+     do navegador. Toda ação que termina em reload tem que passar por aqui. */
+  S.salvarAgora = function () {
+    if (semCliente) return Promise.resolve(false);
+    gravarCache();
+    clearTimeout(timer);
+    timer = null;
+    return Promise.resolve(enviar());
   };
 
   /* --- carga inicial: é o que S.pronto espera ----------------------------- */

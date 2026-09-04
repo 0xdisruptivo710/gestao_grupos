@@ -103,7 +103,8 @@
             S.limparTudo();
             A.fecharDrawer();
             A.toast('Dados zerados');
-            setTimeout(function () { location.reload(); }, 700);
+            /* espera chegar no banco antes de recarregar */
+            S.salvarAgora().then(function () { location.reload(); });
           });
         }
       });

@@ -121,8 +121,12 @@
     if (S.semCliente) return;
     A.countdown(document.getElementById('countdown'));
 
+    /* A barra lateral mostra o nome da campanha, então recarrega. Espera a
+       gravação chegar no banco antes: recarregar durante o intervalo de
+       espera do salvamento descarta a alteração. */
     A.campo(document.getElementById('p-nome'),     'grupo', 'nome', 'Parâmetros', 'nome da campanha', function () {
-      pinta(); location.reload();          // a barra lateral mostra o nome
+      pinta();
+      S.salvarAgora().then(function () { location.reload(); });
     });
     A.campo(document.getElementById('p-abertura'), 'grupo', 'abertura', 'Parâmetros', 'data da abertura', pinta);
     A.campo(document.getElementById('p-meta'),     'grupo', 'metaMembros', 'Parâmetros', 'meta de membros', pinta);

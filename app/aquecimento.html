@@ -212,10 +212,10 @@
               ? 'aplicou o roteiro padrão de aquecimento: ' + criados + ' itens criados' +
                 (mantidos ? ' e ' + mantidos + ' atualizados' : '')
               : 'atualizou as datas do roteiro padrão em ' + mantidos + ' itens');
-            S.salvar();
             A.fecharDrawer();
             A.toast(criados ? criados + ' itens adicionados' : mantidos + ' datas atualizadas');
-            setTimeout(function () { location.reload(); }, 700);
+            /* espera chegar no banco antes de recarregar */
+            S.salvarAgora().then(function () { location.reload(); });
           });
         }
       });
