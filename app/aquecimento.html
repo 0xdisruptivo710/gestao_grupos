@@ -33,7 +33,10 @@
             <h2>Calendário de nutrição</h2>
             <p class="small muted" style="margin-top:2px">Uma linha por tarefa. Clique para abrir o card inteiro.</p>
           </div>
-          <div class="seg" id="filtro" role="group" aria-label="Filtrar por status"></div>
+          <div class="toolbar" style="margin-left:auto">
+            <div class="seg" id="filtro" role="group" aria-label="Filtrar por status"></div>
+            <button class="btn btn-sm" id="padrao">Roteiro padrão</button>
+          </div>
         </div>
         <div id="lista"></div>
       </section>
@@ -53,6 +56,7 @@
 </div>
 
 <script src="/js/clientes.js"></script>
+<script src="/js/roteiro-padrao.js"></script>
 <script src="/js/store.js"></script>
 <script src="/js/app.js"></script>
 <script>
@@ -140,6 +144,82 @@
         });
       });
     }
+
+    /* --- roteiro padrão ---------------------------------------------------
+       O mesmo roteiro de 17 stories + 8 reels em todas as unidades, com as
+       datas contadas de trás para frente a partir da abertura. Aplicar de novo
+       depois de mudar a data só corrige as datas: reconhece o que veio do
+       padrão pelo campo `padrao` e não duplica. */
+    document.getElementById('padrao').addEventListener('click', function () {
+      var d = S.dados;
+      var jaTem = S.lista('aquecimento').filter(function (i) { return i.padrao; });
+      var outros = S.lista('aquecimento').filter(function (i) { return !i.padrao; });
+      var novos = window.gerarRoteiroPadrao(d.grupo.abertura, d.grupo.cliente);
+      var temData = !!d.grupo.abertura;
+
+      var corpo =
+        '<p class="small">' + window.ROTEIRO_PADRAO.origem + ' São ' +
+          window.ROTEIRO_PADRAO.stories + ' stories, um por dia, nos 17 dias antes da abertura, ' +
+          'mais ' + window.ROTEIRO_PADRAO.reels + ' reels nos mesmos dias.</p>' +
+        (temData
+          ? '<p class="small muted">As datas saem da abertura marcada em Parâmetros do grupo: de ' +
+            A.dataBR(novos[0].data) + ' a ' + A.dataBR(novos[novos.length - 1].data) + '.</p>'
+          : '<p class="small" style="color:var(--warn)"><b>Sem data de abertura definida.</b> ' +
+            'Os itens entram sem data, na ordem D-17 a D-1. Depois de marcar a data na Visão geral, ' +
+            'volte aqui e clique de novo: as datas se preenchem sozinhas.</p>') +
+        (jaTem.length
+          ? '<p class="small">Este painel já tem <b>' + jaTem.length + '</b> itens do roteiro padrão. ' +
+            'Eles serão atualizados, não duplicados.</p>'
+          : '') +
+        (outros.length
+          ? '<p class="small muted">Os ' + outros.length + ' itens próprios deste painel não são tocados.</p>'
+          : '') +
+        '<div class="media-block"><div class="eyebrow" style="margin-bottom:8px">As regras do roteiro</div>' +
+          '<ul style="display:grid;gap:6px;padding-left:18px;font-size:13px;color:var(--muted)">' +
+            window.ROTEIRO_PADRAO.regras.map(function (r) { return '<li>' + A.esc(r) + '</li>'; }).join('') +
+          '</ul></div>';
+
+      A.drawer({
+        largo: true,
+        kicker: window.ROTEIRO_PADRAO.nome,
+        titulo: jaTem.length ? 'Atualizar o roteiro padrão' : 'Aplicar o roteiro padrão',
+        corpo: corpo,
+        rodape: '<button class="btn" data-close>Cancelar</button>' +
+                '<button class="btn btn-primary" id="ok-padrao">' +
+                  (jaTem.length ? 'Atualizar' : 'Aplicar') + '</button>',
+        aoAbrir: function (dr) {
+          dr.querySelector('#ok-padrao').addEventListener('click', function () {
+            var porCodigo = {};
+            jaTem.forEach(function (i) { porCodigo[i.padrao] = i; });
+
+            var mantidos = 0, criados = 0;
+            novos.forEach(function (n) {
+              var velho = porCodigo[n.padrao];
+              if (velho) {
+                /* já existe: só a data e o título são refeitos. O que a
+                   clínica escreveu ou anexou fica. */
+                velho.data = n.data;
+                velho.titulo = n.titulo;
+                mantidos++;
+              } else {
+                n.id = S.novoId();
+                d.aquecimento.push(n);
+                criados++;
+              }
+            });
+
+            S.log('Aquecimento', criados
+              ? 'aplicou o roteiro padrão de aquecimento: ' + criados + ' itens criados' +
+                (mantidos ? ' e ' + mantidos + ' atualizados' : '')
+              : 'atualizou as datas do roteiro padrão em ' + mantidos + ' itens');
+            S.salvar();
+            A.fecharDrawer();
+            A.toast(criados ? criados + ' itens adicionados' : mantidos + ' datas atualizadas');
+            setTimeout(function () { location.reload(); }, 700);
+          });
+        }
+      });
+    });
 
     montaFiltro();
     pinta();
