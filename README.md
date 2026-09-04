@@ -46,6 +46,7 @@ values ('slug-do-cliente', 'Nome do Cliente',
   jsonb_build_object(
     'grupo', jsonb_build_object('cliente','Nome do Cliente','nome','Grupo VIP',
              'abertura','','metaMembros',0,'saidas',0,'metaVendas',0),
+    'preparacao','{}'::jsonb,
     'captacao','[]'::jsonb, 'aquecimento','[]'::jsonb, 'remarketing','[]'::jsonb,
     'produtos','[]'::jsonb,
     'promocao', jsonb_build_object('condicao','','validade','','status','Em análise'),
