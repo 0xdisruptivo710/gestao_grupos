@@ -49,6 +49,11 @@
         saidas: 0,
         metaVendas: 0
       },
+      /* Checklists de preparação. Os passos são fixos (moram em app.js, para
+         valerem igual em todo cliente); aqui fica só o estado de cada um:
+         { 'wa-1': { feito: true, quem: 'Equipe AIOS', quando: '...', obs: '' } } */
+      preparacao: {},
+
       captacao: [],      /* disparos para captação, por canal */
       aquecimento: [],   /* mensagens, enquetes e vídeos do grupo */
       remarketing: [],   /* disparos de recuperação */
@@ -281,6 +286,35 @@
     if (String(antes) === String(valor)) return;
     it[campo] = valor;
     S.log(area, 'alterou ' + campo + ' de ' + rotulo + ': “' + fmt(antes) + '” → “' + fmt(valor) + '”');
+  };
+
+  /* --- checklist de preparação -------------------------------------------
+     Passo marcado guarda quem marcou e quando: numa operação de duas equipes,
+     "está feito" sem assinatura vira discussão.
+     ----------------------------------------------------------------------- */
+  S.prep = function (id) {
+    if (!S.dados.preparacao) S.dados.preparacao = {};
+    return S.dados.preparacao[id] || { feito: false, obs: '', quem: '', quando: '' };
+  };
+
+  S.marcarPrep = function (id, feito, rotulo, area) {
+    if (!S.dados.preparacao) S.dados.preparacao = {};
+    var p = S.dados.preparacao[id] || { feito: false, obs: '' };
+    if (p.feito === feito) return;
+    p.feito = feito;
+    p.quem = feito ? S.usuario().nome : '';
+    p.quando = feito ? new Date().toISOString() : '';
+    S.dados.preparacao[id] = p;
+    S.log(area || 'Preparação', (feito ? 'concluiu' : 'reabriu') + ' “' + rotulo + '”');
+  };
+
+  S.obsPrep = function (id, obs, rotulo, area) {
+    if (!S.dados.preparacao) S.dados.preparacao = {};
+    var p = S.dados.preparacao[id] || { feito: false, obs: '' };
+    if ((p.obs || '') === obs) return;
+    p.obs = obs;
+    S.dados.preparacao[id] = p;
+    S.log(area || 'Preparação', 'anotou em “' + rotulo + '”: ' + fmt(obs));
   };
 
   S.setCampo = function (grupoNome, campo, valor, area, rotulo) {

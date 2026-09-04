@@ -59,7 +59,11 @@
 /* ---- Tela: Aquecimento --------------------------------------------------- */
 (function () {
   var S = window.Store, A = window.AIOS;
-  var TIPOS = ['Mensagem', 'Enquete', 'Vídeo'];
+
+  /* Os três primeiros vão para dentro do grupo, no WhatsApp. Os três últimos
+     são o que puxa gente para o grupo, publicado no Instagram — é onde entram
+     os roteiros de story que a clínica recebe pronto. */
+  var TIPOS = ['Mensagem', 'Enquete', 'Vídeo', 'Story', 'Reel', 'Arte'];
   var STATUS = ['Planejado', 'Enviado', 'Cancelado'];
 
   var filtro = '';   // '' = todos
@@ -157,18 +161,24 @@
           n: 'quantas pessoas viram os envios' }
       ]);
 
-      /* engajamento por formato — o detalhe do número de cima */
-      A.faixa('por-tipo', TIPOS.map(function (tp) {
+      /* Engajamento por formato — o detalhe do número de cima. Só entram os
+         formatos que existem no calendário: coluna de formato que ninguém usa
+         é espaço gasto para dizer "zero". */
+      var usados = TIPOS.filter(function (tp) {
+        return itens.some(function (i) { return i.tipo === tp; });
+      });
+      A.faixa('por-tipo', (usados.length ? usados : TIPOS.slice(0, 3)).map(function (tp) {
         var doTipo = itens.filter(function (i) { return i.tipo === tp && i.status === 'Enviado'; });
         var alc = doTipo.reduce(function (s, x) { return s + (Number(x.alcance) || 0); }, 0);
         var res = doTipo.reduce(function (s, x) { return s + (Number(x.respostas) || 0); }, 0);
         var tx = alc ? Math.round(res / alc * 100) : 0;
+        var total = itens.filter(function (i) { return i.tipo === tp; }).length;
         return {
           k: tp, v: alc ? tx + '<span class="un">%</span>' : '—', vazio: !alc,
           barra: alc ? tx : null,
           n: doTipo.length
-            ? doTipo.length + (doTipo.length === 1 ? ' enviado · ' : ' enviados · ') + res + ' respostas'
-            : 'nenhum enviado'
+            ? doTipo.length + ' de ' + total + ' enviados · ' + res + ' respostas'
+            : total + (total === 1 ? ' planejado, nenhum enviado' : ' planejados, nenhum enviado')
         };
       }));
     }

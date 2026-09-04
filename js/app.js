@@ -68,7 +68,8 @@
     film:    '<rect x="3" y="4" width="18" height="16" rx="2"/><path d="M8 4v16M16 4v16M3 12h18"/>',
     link:    '<path d="M10 13a4 4 0 005.7 0l3-3a4 4 0 10-5.7-5.7L11.5 6"/><path d="M14 11a4 4 0 00-5.7 0l-3 3A4 4 0 108 19.7L9.5 18"/>',
     chevron: '<path d="M9 6l6 6-6 6"/>',
-    seta:    '<path d="M12 5v14M6 13l6 6 6-6"/>'
+    seta:    '<path d="M12 5v14M6 13l6 6 6-6"/>',
+    'check-list': '<path d="M9 6h12M9 12h12M9 18h12"/><path d="M3.5 6l1.3 1.3L7.5 4.6"/><path d="M3.5 12l1.3 1.3L7.5 10.6"/><path d="M3.5 18l1.3 1.3L7.5 16.6"/>'
   };
   function ico(nome, tam) {
     return '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" ' +
@@ -84,6 +85,9 @@
      ----------------------------------------------------------------------- */
   var NAV = [
     { id: 'dashboard',   href: 'index.html',       nome: 'Visão geral',     icone: 'grid' },
+
+    { grupo: 'Antes de começar' },
+    { id: 'preparacao',  href: 'preparacao.html',  nome: 'Preparação',      icone: 'check-list' },
 
     { grupo: 'Encher o grupo' },
     { id: 'captacao',    href: 'captacao.html',    nome: 'Captação',        icone: 'funnel' },
@@ -102,6 +106,7 @@
 
   var TITULOS = {
     dashboard:   ['Visão geral', 'Painel do grupo'],
+    preparacao:  ['Preparação', 'O que precisa estar pronto antes'],
     captacao:    ['Disparos para captação', 'Funil de entrada'],
     aquecimento: ['Aquecimento do grupo', 'Mensagens, enquetes e vídeos'],
     remarketing: ['Disparos de remarketing', 'Recuperação'],
@@ -757,6 +762,86 @@
         '<span class="et-go">' + ico('chevron') + '</span>' +
       '</a>';
     }).join('');
+  };
+
+  /* ---------- checklist ----------------------------------------------------
+     Os passos vêm de checklists.js e são iguais para todo cliente; o que se
+     grava é só o estado. Marcar guarda quem marcou e quando, porque numa
+     operação de duas equipes "está feito" sem assinatura vira discussão.
+     ----------------------------------------------------------------------- */
+  A.checklist = function (el, bloco, aoMudar) {
+    el = typeof el === 'string' ? document.getElementById(el) : el;
+    if (!el) return;
+
+    function pinta() {
+      el.innerHTML = bloco.passos.map(function (p) {
+        var e = S.prep(p.id);
+        return '<div class="chk-item' + (e.feito ? ' feito' : '') + '" data-p="' + p.id + '">' +
+          '<label class="chk-marca">' +
+            '<input type="checkbox"' + (e.feito ? ' checked' : '') + ' data-chk="' + p.id + '" ' +
+              'aria-label="' + A.esc(p.titulo) + '">' +
+          '</label>' +
+          '<div class="chk-txt">' +
+            '<b>' + A.esc(p.titulo) + '</b>' +
+            '<p>' + A.esc(p.ajuda) + '</p>' +
+            (e.obs
+              ? '<div class="chk-obs"><input class="input" data-obs="' + p.id + '" value="' +
+                  A.esc(e.obs) + '" placeholder="Anotação"></div>'
+              : '<button class="chk-add" data-add-obs="' + p.id + '">+ anotar</button>') +
+          '</div>' +
+          '<div class="chk-quem">' +
+            (e.feito && e.quem
+              ? '<span class="badge ok">' + A.esc(e.quem) + '</span>' +
+                '<span class="small muted">' + (e.quando ? A.quando(e.quando) : '') + '</span>'
+              : '') +
+          '</div>' +
+        '</div>';
+      }).join('');
+
+      el.querySelectorAll('[data-chk]').forEach(function (c) {
+        c.addEventListener('change', function () {
+          var passo = acha(c.dataset.chk);
+          S.marcarPrep(c.dataset.chk, c.checked, passo.titulo, bloco.nome);
+          S.salvar(); pinta();
+          if (aoMudar) aoMudar();
+        });
+      });
+
+      el.querySelectorAll('[data-obs]').forEach(function (i) {
+        i.addEventListener('change', function () {
+          var passo = acha(i.dataset.obs);
+          S.obsPrep(i.dataset.obs, i.value, passo.titulo, bloco.nome);
+          S.salvar();
+          if (aoMudar) aoMudar();
+        });
+      });
+
+      el.querySelectorAll('[data-add-obs]').forEach(function (b) {
+        b.addEventListener('click', function () {
+          var id = b.dataset.addObs;
+          b.outerHTML = '<div class="chk-obs"><input class="input" data-obs="' + id +
+            '" value="" placeholder="Anotação"></div>';
+          var novo = el.querySelector('[data-obs="' + id + '"]');
+          novo.focus();
+          novo.addEventListener('change', function () {
+            var passo = acha(id);
+            S.obsPrep(id, novo.value, passo.titulo, bloco.nome);
+            S.salvar(); pinta();
+            if (aoMudar) aoMudar();
+          });
+        });
+      });
+    }
+
+    function acha(id) {
+      for (var i = 0; i < bloco.passos.length; i++) {
+        if (bloco.passos[i].id === id) return bloco.passos[i];
+      }
+      return { titulo: id };
+    }
+
+    pinta();
+    return { render: pinta };
   };
 
   /* ---------- próximo passo ------------------------------------------------

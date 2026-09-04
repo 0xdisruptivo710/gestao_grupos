@@ -78,7 +78,7 @@
         <div class="card-head" style="margin-bottom:12px">
           <div>
             <h2>Como está a campanha</h2>
-            <p class="small muted" style="margin-top:2px">As seis etapas na ordem em que acontecem. Clique para abrir.</p>
+            <p class="small muted" style="margin-top:2px">Da preparação ao dia da abertura, na ordem em que acontecem. Clique para abrir.</p>
           </div>
         </div>
         <div id="etapas"></div>
@@ -106,6 +106,7 @@
 </div>
 
 <script src="/js/clientes.js"></script>
+<script src="/js/checklists.js"></script>
 <script src="/js/store.js"></script>
 <script src="/js/app.js"></script>
 <script>
@@ -155,8 +156,17 @@
          mentir do mesmo jeito que o contador travado em "AO VIVO". */
       var abertura = new Date(d.grupo.abertura);
       var jaAbriu = isFinite(abertura) && abertura.getTime() <= Date.now();
+      var prep = window.progressoChecklists(d.preparacao);
 
       A.etapas('etapas', [
+        {
+          nome: 'Preparação', href: 'preparacao.html', icone: 'check-list',
+          estado: !prep.feitos ? 'parada' : (prep.feitos === prep.total ? 'feita' : 'andando'),
+          texto: prep.feitos
+            ? prep.feitos + ' de ' + prep.total + ' passos · canal oficial e base de contatos'
+            : 'canal oficial e base de contatos ainda não começaram',
+          num: prep.pct + '%'
+        },
         {
           nome: 'Captação', href: 'captacao.html', icone: 'funnel',
           estado: !d.captacao.length ? 'parada'
@@ -249,6 +259,12 @@
     /* A ordem aqui é a ordem em que a campanha se monta: primeiro quando abre
        e para quantas pessoas, depois o que vender, depois como encher o grupo. */
     function primeiroPasso(d, t) {
+      var prep = window.progressoChecklists(d.preparacao);
+      if (!prep.feitos) return {
+        titulo: 'Comece pela preparação',
+        texto: 'Sem canal oficial no ar e base de contatos tratada não há disparo. São os dois checklists que abrem a campanha.',
+        href: 'preparacao.html', acao: 'Abrir Preparação'
+      };
       if (!d.grupo.abertura) return {
         titulo: 'Comece pela data da abertura',
         texto: 'É dela que saem o contador, os lembretes do roteiro e o relatório. Preencha em Parâmetros do grupo, logo abaixo.'

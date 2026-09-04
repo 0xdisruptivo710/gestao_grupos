@@ -1,0 +1,108 @@
+<!doctype html>
+<html lang="pt-BR">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Preparação · Painel de Grupos VIP — AIOS</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Geist:wght@400;500;600&family=Geist+Mono:wght@400;500&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="/css/app.css">
+</head>
+<body data-page="preparacao">
+
+<div class="app">
+  <aside class="sidebar" id="sidebar"></aside>
+  <div class="main">
+    <header class="topbar" id="topbar"></header>
+
+    <main class="content stack" style="gap:18px">
+
+      <div class="page-head">
+        <div>
+          <h1>Preparação</h1>
+          <p>O que precisa estar pronto antes de abrir o grupo. São os mesmos passos em todo cliente: o canal oficial funcionando e a base de contatos tratada. Marcar guarda quem marcou e quando.</p>
+        </div>
+      </div>
+
+      <section id="faixa"></section>
+
+      <div id="blocos" class="stack" style="gap:18px"></div>
+
+    </main>
+  </div>
+</div>
+
+<script src="/js/clientes.js"></script>
+<script src="/js/checklists.js"></script>
+<script src="/js/store.js"></script>
+<script src="/js/app.js"></script>
+<script>
+/* ---- Tela: Preparação ---------------------------------------------------- */
+(function () {
+  var S = window.Store, A = window.AIOS;
+
+  S.pronto(function () {
+    if (S.semCliente) return;
+
+    /* um cartão por bloco, montado a partir de checklists.js */
+    document.getElementById('blocos').innerHTML = window.CHECKLISTS.map(function (b) {
+      return '<section class="card card-flush">' +
+        '<div class="card-head">' +
+          '<div>' +
+            '<h2>' + A.esc(b.nome) + '</h2>' +
+            '<p class="small muted" style="margin-top:2px">' + A.esc(b.resumo) + '</p>' +
+          '</div>' +
+          '<span class="badge" id="cont-' + b.id + '"></span>' +
+        '</div>' +
+        '<div id="lista-' + b.id + '"></div>' +
+      '</section>';
+    }).join('');
+
+    var listas = window.CHECKLISTS.map(function (b) {
+      return { bloco: b, ui: A.checklist('lista-' + b.id, b, pinta) };
+    });
+
+    pinta();
+
+    function pinta() {
+      var geral = window.progressoChecklists(S.dados.preparacao);
+
+      /* quanto falta em cada bloco */
+      var porBloco = window.CHECKLISTS.map(function (b) {
+        var feitos = b.passos.filter(function (p) { return S.prep(p.id).feito; }).length;
+        var el = document.getElementById('cont-' + b.id);
+        if (el) el.textContent = feitos + ' de ' + b.passos.length;
+        return { b: b, feitos: feitos, total: b.passos.length };
+      });
+
+      /* o primeiro passo em aberto, na ordem — é por ele que se começa */
+      var proximo = null;
+      for (var i = 0; i < window.CHECKLISTS.length && !proximo; i++) {
+        var bl = window.CHECKLISTS[i];
+        for (var j = 0; j < bl.passos.length; j++) {
+          if (!S.prep(bl.passos[j].id).feito) { proximo = bl.passos[j]; break; }
+        }
+      }
+
+      A.faixa('faixa', [
+        { k: 'Preparação concluída', v: geral.pct + '<span class="un">%</span>',
+          destaque: true, vazio: !geral.feitos, barra: geral.pct,
+          n: geral.feitos + ' de ' + geral.total + ' passos' +
+             (geral.feitos === geral.total ? ' — pode abrir o grupo' : '') }
+      ].concat(porBloco.map(function (x) {
+        return {
+          k: x.b.nome, v: x.feitos + ' / ' + x.total, vazio: !x.feitos,
+          barra: Math.round(x.feitos / x.total * 100),
+          n: x.feitos === x.total ? 'bloco concluído' : (x.total - x.feitos) + ' em aberto'
+        };
+      })).concat([
+        { k: 'Próximo passo', v: proximo ? '&rarr;' : '&#10003;', vazio: !proximo,
+          n: proximo ? proximo.titulo : 'nada em aberto' }
+      ]));
+    }
+  });
+})();
+</script>
+</body>
+</html>

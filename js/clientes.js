@@ -20,37 +20,41 @@
 (function () {
   'use strict';
 
+  /* Em ordem alfabética: a lista vai crescer e o hub precisa continuar
+     previsível para quem procura o cliente pelo nome. */
   var LISTA = [
-    {
-      slug: 'botoclinic-riomar',
-      cliente: 'Botoclinic Riomar',
-      equipeCliente: 'Equipe Botoclinic',
-      grupo: 'Grupo VIP'
-    },
-    {
-      slug: 'dr-colageno',
-      cliente: 'Dr. Colágeno',
-      equipeCliente: 'Equipe Dr. Colágeno',
-      grupo: 'Grupo VIP'
-    },
-    {
-      slug: 'dra-joelma-torigoi',
-      cliente: 'Dra. Joelma Torigoi',
-      equipeCliente: 'Equipe Dra. Joelma',
-      grupo: 'Grupo VIP'
-    },
-    {
-      slug: 'andela-michele',
-      cliente: 'Andela Michele',
-      equipeCliente: 'Equipe Andela Michele',
-      grupo: 'Grupo VIP'
-    },
-    {
-      slug: 'fd-duque-de-caxias',
-      cliente: 'FD Duque de Caxias',
-      equipeCliente: 'Equipe FD Duque',
-      grupo: 'Grupo VIP'
-    }
+    { slug: 'botoclinic-riomar',  cliente: 'Botoclinic Riomar',
+      equipeCliente: 'Equipe Botoclinic',    grupo: 'Grupo VIP' },
+
+    { slug: 'dr-colageno',        cliente: 'Dr. Colágeno',
+      equipeCliente: 'Equipe Dr. Colágeno',  grupo: 'Grupo VIP' },
+
+    { slug: 'dra-jade',           cliente: 'Dra. Jade',
+      equipeCliente: 'Equipe Dra. Jade',     grupo: 'Grupo VIP' },
+
+    { slug: 'dra-joelma-torigoi', cliente: 'Dra. Joelma Torigoi',
+      equipeCliente: 'Equipe Dra. Joelma',   grupo: 'Grupo VIP' },
+
+    { slug: 'fd-analia-franco',   cliente: 'Face Doctor Anália Franco',
+      equipeCliente: 'Equipe Anália Franco', grupo: 'Grupo VIP' },
+
+    { slug: 'fd-barra-da-tijuca', cliente: 'Face Doctor Barra da Tijuca',
+      equipeCliente: 'Equipe Barra da Tijuca', grupo: 'Grupo VIP' },
+
+    { slug: 'fd-duque-de-caxias', cliente: 'Face Doctor Duque de Caxias',
+      equipeCliente: 'Equipe Duque de Caxias', grupo: 'Grupo VIP · 1 ano de clínica' },
+
+    { slug: 'fd-ibirapuera',      cliente: 'Face Doctor Ibirapuera',
+      equipeCliente: 'Equipe Ibirapuera',    grupo: 'Grupo VIP' },
+
+    { slug: 'fd-ponta-negra',     cliente: 'Face Doctor Ponta Negra',
+      equipeCliente: 'Equipe Ponta Negra',   grupo: 'Grupo VIP' },
+
+    { slug: 'livia-estetica',     cliente: 'Lívia Estética',
+      equipeCliente: 'Equipe Lívia',         grupo: 'Grupo VIP' },
+
+    { slug: 'spazio-andela',      cliente: 'Spazio Andela',
+      equipeCliente: 'Equipe Spazio Andela', grupo: 'Grupo VIP' }
   ];
 
   /* O slug é o primeiro pedaço do caminho. Serve tanto para /cliente/ quanto

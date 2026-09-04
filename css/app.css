@@ -322,6 +322,35 @@ button { cursor: pointer; background: none; border: 0; }
 .proximo .btn { background: var(--accent); border-color: var(--accent); color: #fff; font-weight: 600; }
 .proximo .btn:hover { background: #c81269; border-color: #c81269; }
 
+/* ---------- 6f. Checklist ------------------------------------------------
+   Um passo por linha. A ajuda fica embaixo do título em cinza, porque quem
+   está fazendo pela primeira vez precisa dela e quem já fez passa direto.
+   ----------------------------------------------------------------------- */
+.chk-item {
+  display: grid; grid-template-columns: 26px minmax(0, 1fr) auto;
+  gap: 14px; align-items: start;
+  padding: 14px 18px; border-bottom: 1px solid var(--border);
+}
+.chk-item:last-child { border-bottom: 0; }
+.chk-item:hover { background: var(--surface-2); }
+.chk-marca { padding-top: 1px; }
+.chk-marca input {
+  width: 19px; height: 19px; accent-color: var(--accent); cursor: pointer;
+}
+.chk-txt { min-width: 0; }
+.chk-txt b { font-size: 14px; font-weight: 500; display: block; }
+.chk-txt p { font-size: 12.5px; color: var(--muted); margin-top: 3px; max-width: 78ch; }
+.chk-item.feito .chk-txt b { color: var(--muted); text-decoration: line-through; text-decoration-thickness: 1px; }
+.chk-quem { display: grid; gap: 3px; justify-items: end; text-align: right; white-space: nowrap; }
+
+.chk-add {
+  margin-top: 7px; font-size: 12px; color: var(--muted);
+  border-bottom: 1px dashed var(--border); padding-bottom: 1px;
+}
+.chk-add:hover { color: var(--accent); border-color: var(--accent); }
+.chk-obs { margin-top: 8px; max-width: 520px; }
+.chk-obs .input { min-height: 34px; font-size: 13px; }
+
 /* ---------- 6e. Controle segmentado --------------------------------------
    O filtro de tipos do catálogo de iscas usava esta classe, que nunca existiu
    no CSS: os botões saíam como texto cru no canto do cartão.
@@ -674,6 +703,10 @@ select.cell { appearance: none; cursor: pointer; padding-right: 20px; background
   .faixa > div:nth-child(-n+2) { border-top: 0; }
   .faixa > div:nth-child(2n) { box-shadow: -1px 0 0 var(--border); }
   .faixa .destaque { grid-column: 1 / -1; }
+
+  /* O nome de quem marcou vai para baixo do passo. */
+  .chk-item { grid-template-columns: 26px minmax(0, 1fr); }
+  .chk-quem { grid-column: 2; justify-items: start; text-align: left; margin-top: 6px; }
 
   /* A etapa empilha: bolinha + nome em cima, estado embaixo. */
   .etapa { grid-template-columns: 30px minmax(0, 1fr) auto; gap: 12px; }
