@@ -89,6 +89,26 @@ dentro do grupo, no WhatsApp. `Story`, `Reel` e `Arte` são o que puxa gente par
 o grupo, publicado no Instagram — é onde entra o roteiro que a clínica recebe
 pronto, com a fala já escrita em cada item.
 
+### Roteiro padrão
+
+O botão **Roteiro padrão**, no Aquecimento, aplica o roteiro da casa: 17 stories,
+um por dia nos 17 dias antes da abertura, mais 8 reels nos mesmos dias. Nasceu do
+roteiro da Dra. Joelma.
+
+Ele mora em `js/roteiro-padrao.js` com **dias relativos** (D-17 a D-1) e
+marcadores de clínica, data e hora. `gerarRoteiroPadrao(abertura, cliente)` conta
+as datas de trás para frente a partir da abertura de cada unidade, então o mesmo
+roteiro serve para qualquer data.
+
+- O que a clínica precisa preencher fica **entre colchetes** no texto —
+  `[QUEM GRAVA]`, `[TRATAMENTO 1]`, `[N]` sessões. É de propósito: lacuna visível
+  na tela em vez de informação inventada.
+- Sem data de abertura, os itens entram sem data, na ordem D-17 a D-1. Marque a
+  abertura na Visão geral e clique de novo: as datas se preenchem.
+- Aplicar de novo **não duplica**. Cada item gerado guarda o código em `padrao`;
+  reaplicar só refaz data e título, preservando o texto e os anexos que a
+  clínica tiver colocado. Itens próprios do painel não são tocados.
+
 ## Banco
 
 Supabase da AIOS (`ehlpmukjdknnyhkycncb`), duas tabelas:
