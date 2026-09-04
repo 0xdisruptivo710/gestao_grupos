@@ -11,16 +11,17 @@ AIOS** ou como a equipe da clínica — é esse nome que assina o histórico.
 
 ```
 index.html          hub: lista os clientes de js/clientes.js
-app/                as nove telas, iguais para todos os clientes
+app/                as telas, iguais para todos os clientes
 css/app.css         o sistema visual inteiro
 js/clientes.js      QUEM TEM PAINEL — fonte única da verdade
+js/checklists.js    OS PASSOS DE PREPARAÇÃO — iguais em todo cliente
 js/store.js         estado, cache local e conversa com o banco
 js/app.js           shell (barra lateral, topo) e componentes de tela
 api/painel.js       a única coisa que fala com o Supabase
 vercel.json         faz /cliente/tela.html servir app/tela.html
 ```
 
-Antes existia **uma pasta por cliente com as nove telas copiadas dentro**. Eram
+Antes existia **uma pasta por cliente com as telas copiadas dentro**. Eram
 nove arquivos idênticos vezes o número de clientes, e todo ajuste de tela
 precisava ser repetido em cada pasta — com o risco de uma ficar para trás. Hoje
 a tela é uma só: `vercel.json` reescreve `/botoclinic-riomar/iscas.html` para
@@ -61,6 +62,31 @@ que era digitado se perdia.
 
 Não é preciso mexer em `api/painel.js`: quem autoriza um slug é a existência da
 linha no banco, não uma lista no código.
+
+## Preparação
+
+`Preparação` é a primeira tela do menu e traz dois checklists, iguais para todo
+cliente:
+
+- **Canal oficial no ar** — BM verificada, chip novo, WABA, cartão na BM,
+  perfil, limite de envio, conexão com o CRM, templates, teste ponta a ponta e
+  link do grupo. Feito uma vez por cliente.
+- **Base de contatos e campanhas** — extração, normalização, cruzamento com
+  quem já comprou, exclusão de quem já está no grupo, segmentação, ondas, copy,
+  etiqueta de origem, disparo teste e acompanhamento. Feito a cada campanha.
+
+Os passos moram em `js/checklists.js`, porque são o procedimento da casa e não
+uma lista que cada painel inventa: mexer lá muda o checklist de todos os
+painéis. O que fica no banco é só o estado de cada passo — feito, quem marcou,
+quando e a anotação. Marcar registra a assinatura porque, numa operação de duas
+equipes, "está feito" sem nome vira discussão.
+
+## Conteúdo de aquecimento
+
+O calendário aceita seis formatos. `Mensagem`, `Enquete` e `Vídeo` vão para
+dentro do grupo, no WhatsApp. `Story`, `Reel` e `Arte` são o que puxa gente para
+o grupo, publicado no Instagram — é onde entra o roteiro que a clínica recebe
+pronto, com a fala já escrita em cada item.
 
 ## Banco
 
