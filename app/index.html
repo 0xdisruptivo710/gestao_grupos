@@ -71,6 +71,13 @@
             <input class="input input-num" id="p-vagas" type="number" min="0">
           </div>
         </div>
+
+        <div class="field" style="margin-top:14px">
+          <label for="p-grupo-op">Grupo de organização no WhatsApp
+            <span class="dica">onde o lembrete diário é postado</span></label>
+          <input class="input" id="p-grupo-op" placeholder="120363000000000000@g.us">
+          <p class="small muted" style="margin-top:2px" id="p-grupo-op-nota"></p>
+        </div>
       </section>
 
       <!-- A campanha em ordem, não um mosaico de caixas -->
@@ -132,6 +139,7 @@
     A.campo(document.getElementById('p-meta'),     'grupo', 'metaMembros', 'Parâmetros', 'meta de membros', pinta);
     A.campo(document.getElementById('p-saidas'),   'grupo', 'saidas', 'Parâmetros', 'saídas do grupo', pinta);
     A.campo(document.getElementById('p-vagas'),    'grupo', 'metaVendas', 'Parâmetros', 'meta de vendas na abertura', pinta);
+    A.campo(document.getElementById('p-grupo-op'), 'grupo', 'grupoOperacao', 'Parâmetros', 'grupo de organização no WhatsApp', pinta);
 
     pinta();
 
@@ -147,6 +155,15 @@
 
       document.getElementById('hero-membros').textContent = t.membros + ' / ' + t.metaMembros;
       document.getElementById('hero-pct').textContent = t.pctMeta + '%';
+
+      /* Diz em uma linha se o lembrete diário vai sair ou não para este
+         cliente — é a única consequência prática de preencher o campo. */
+      var nota = document.getElementById('p-grupo-op-nota');
+      nota.textContent = !d.grupo.grupoOperacao
+        ? 'Sem o grupo preenchido, este cliente fica fora do lembrete diário.'
+        : (d.grupo.abertura
+            ? 'O lembrete das gravações do dia é postado neste grupo toda manhã.'
+            : 'Falta a data da abertura: sem ela o calendário não tem dia e o lembrete não sai.');
 
       /* ---------- próximo passo ----------
          Uma frase só, a primeira que estiver faltando. Some quando a campanha

@@ -47,7 +47,11 @@
         abertura: '',
         metaMembros: 0,
         saidas: 0,
-        metaVendas: 0
+        metaVendas: 0,
+        /* JID do grupo de organização no WhatsApp (o da equipe, não o dos
+           pacientes). É para onde o lembrete diário é postado. Sem isto o
+           cliente simplesmente não entra na rotina de lembrete. */
+        grupoOperacao: ''
       },
       /* Checklists de preparação. Os passos são fixos (moram em app.js, para
          valerem igual em todo cliente); aqui fica só o estado de cada um:
