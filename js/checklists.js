@@ -10,10 +10,10 @@
    desmarcado em todo mundo; passo removido some da tela, mas o que já estava
    gravado continua no banco.
    ========================================================================== */
-(function () {
+(function (raiz) {
   'use strict';
 
-  window.CHECKLISTS = [
+  var CHECKLISTS = [
     {
       id: 'api',
       nome: 'Canal oficial no ar',
@@ -72,15 +72,25 @@
 
   /* Quantos passos existem e quantos estão feitos. O painel usa nos indicadores
      e na linha do tempo da visão geral. */
-  window.progressoChecklists = function (preparacao) {
+  function progressoChecklists(preparacao) {
     var p = preparacao || {};
     var total = 0, feitos = 0;
-    window.CHECKLISTS.forEach(function (bloco) {
+    CHECKLISTS.forEach(function (bloco) {
       bloco.passos.forEach(function (passo) {
         total++;
         if (p[passo.id] && p[passo.id].feito) feitos++;
       });
     });
     return { total: total, feitos: feitos, pct: total ? Math.round(feitos / total * 100) : 0 };
-  };
-})();
+  }
+
+  /* Serve aos dois lados: no navegador vira window.CHECKLISTS, no servidor é
+     require() de api/lembretes.js. Assim o total de passos tem uma fonte só —
+     antes a API repetia "20" na mão e passaria a mentir no dia em que alguém
+     acrescentasse um passo aqui. */
+  raiz.CHECKLISTS = CHECKLISTS;
+  raiz.progressoChecklists = progressoChecklists;
+  if (typeof module === 'object' && module.exports) {
+    module.exports = { CHECKLISTS: CHECKLISTS, progressoChecklists: progressoChecklists };
+  }
+})(typeof window !== 'undefined' ? window : globalThis);

@@ -19,6 +19,11 @@
    que mandar o mesmo recado duas vezes no grupo do cliente.
    ========================================================================== */
 
+/* Mesma lista que a tela de Preparação usa: o total de passos tem uma fonte
+   só. Repetir o número aqui daria certo hoje e mentiria no dia em que alguém
+   acrescentasse um passo no checklist. */
+const { progressoChecklists } = require('../js/checklists.js');
+
 const URL = process.env.SUPABASE_URL;
 const CHAVE = process.env.SUPABASE_SERVICE_KEY;
 const TOKEN = process.env.LEMBRETE_TOKEN;
@@ -136,10 +141,9 @@ function montarLembrete(painel, hoje) {
     });
   }
 
-  const prep = d.preparacao || {};
-  const feitos = Object.keys(prep).filter(k => prep[k] && prep[k].feito).length;
-  if (feitos < 20) {
-    linhas.push('', '*Preparação* ' + feitos + ' de 20 passos');
+  const prep = progressoChecklists(d.preparacao);
+  if (prep.feitos < prep.total) {
+    linhas.push('', '*Preparação* ' + prep.feitos + ' de ' + prep.total + ' passos');
   }
 
   linhas.push('', SITE + '/' + painel.slug + '/');
