@@ -412,6 +412,9 @@
     var entradas = soma(d.captacao, 'entradas');
     var membros = Math.max(0, entradas - (Number(d.grupo.saidas) || 0));
 
+    /* Item cancelado saiu do plano: contá-lo no total faz "0 de 35" quando o
+       calendário real tem 10, e joga a execução do plano para baixo de graça. */
+    var aqVivos = d.aquecimento.filter(function (x) { return x.status !== 'Cancelado'; });
     var aqEnviados = d.aquecimento.filter(function (x) { return x.status === 'Enviado'; });
     var alcance = soma(aqEnviados, 'alcance');
     var respostas = soma(aqEnviados, 'respostas');
@@ -450,7 +453,8 @@
       custoLead: leads ? investimento / leads : 0,
       taxaEntrada: leads ? Math.round(entradas / leads * 100) : 0,
 
-      aqTotal: d.aquecimento.length,
+      aqTotal: aqVivos.length,
+      aqCancelados: d.aquecimento.length - aqVivos.length,
       aqEnviados: aqEnviados.length,
       alcance: alcance,
       respostas: respostas,

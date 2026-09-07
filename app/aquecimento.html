@@ -225,7 +225,10 @@
     pinta();
 
     function pinta() {
-      var t = S.totais(), itens = S.lista('aquecimento');
+      var t = S.totais(), todos = S.lista('aquecimento');
+      /* Cancelado não faz parte do plano: entra na conta só como nota de rodapé. */
+      var itens = todos.filter(function (i) { return i.status !== 'Cancelado'; });
+      var cancelados = todos.length - itens.length;
       var pct = itens.length ? Math.round(t.aqEnviados / itens.length * 100) : 0;
 
       A.faixa('faixa', [
@@ -234,7 +237,10 @@
           n: t.alcance ? t.respostas + ' respostas em ' + t.alcance.toLocaleString('pt-BR') + ' de alcance'
                        : 'nenhum item enviado com alcance lançado' },
         { k: 'Plano executado', v: t.aqEnviados + ' / ' + itens.length, vazio: !itens.length, barra: pct,
-          n: itens.length ? pct + '% do que foi planejado já foi ao grupo' : 'nada planejado ainda' },
+          n: itens.length
+            ? pct + '% do que foi planejado já foi ao grupo' +
+              (cancelados ? ' · ' + cancelados + ' cancelados fora da conta' : '')
+            : 'nada planejado ainda' },
         { k: 'Respostas no grupo', v: t.respostas, vazio: !t.respostas,
           n: 'somadas em todos os itens enviados' },
         { k: 'Alcance somado', v: t.alcance.toLocaleString('pt-BR'), vazio: !t.alcance,
