@@ -104,7 +104,7 @@
         { k: 'Preparação concluída', v: geral.pct + '<span class="un">%</span>',
           vazio: !geral.resolvidos, barra: geral.pct,
           n: geral.resolvidos + ' de ' + geral.total + ' passos' +
-             (geral.parciais ? ' · ' + geral.parciais + ' parcial' + (geral.parciais > 1 ? 'is' : '') : '') +
+             (geral.parciais ? ' · ' + geral.parciais + (geral.parciais > 1 ? ' parciais' : ' parcial') : '') +
              (geral.na ? ' · ' + geral.na + ' não se aplica' : '') }
       ].concat(porBloco.map(function (x) {
         return {
