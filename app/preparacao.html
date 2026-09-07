@@ -21,7 +21,7 @@
       <div class="page-head">
         <div>
           <h1>Preparação</h1>
-          <p>O que precisa estar pronto antes de abrir o grupo. São os mesmos passos em todo cliente: o canal oficial funcionando e a base de contatos tratada. Marcar guarda quem marcou e quando.</p>
+          <p>O que precisa estar pronto antes de abrir o grupo, igual em todo cliente: as definições da campanha, o canal oficial no ar e a base de contatos tratada. Quem tem a marca <b>trava a grade</b> segura o roteiro inteiro — sem esses, não há o que gerar. Cada passo guarda quem mexeu e quando.</p>
         </div>
       </div>
 
@@ -70,31 +70,50 @@
 
       /* quanto falta em cada bloco */
       var porBloco = window.CHECKLISTS.map(function (b) {
-        var feitos = b.passos.filter(function (p) { return S.prep(p.id).feito; }).length;
+        var contas = { feito: 0, parcial: 0, na: 0, pendente: 0 };
+        b.passos.forEach(function (p) { contas[S.estadoPrep(p.id)]++; });
+        var resolvidos = contas.feito + contas.na;
         var el = document.getElementById('cont-' + b.id);
-        if (el) el.textContent = feitos + ' de ' + b.passos.length;
-        return { b: b, feitos: feitos, total: b.passos.length };
+        if (el) {
+          el.textContent = resolvidos + ' de ' + b.passos.length;
+          el.className = 'badge' + (resolvidos === b.passos.length ? ' ok' : '');
+        }
+        return { b: b, resolvidos: resolvidos, total: b.passos.length, contas: contas };
       });
 
-      /* o primeiro passo em aberto, na ordem — é por ele que se começa */
+      /* o primeiro passo em aberto, na ordem */
       var proximo = null;
       for (var i = 0; i < window.CHECKLISTS.length && !proximo; i++) {
         var bl = window.CHECKLISTS[i];
         for (var j = 0; j < bl.passos.length; j++) {
-          if (!S.prep(bl.passos[j].id).feito) { proximo = bl.passos[j]; break; }
+          var e = S.estadoPrep(bl.passos[j].id);
+          if (e === 'pendente' || e === 'parcial') { proximo = bl.passos[j]; break; }
         }
       }
 
+      /* Bloqueio vem primeiro e em destaque: é a diferença entre "falta
+         coisa" e "não dá para gerar roteiro nenhum". */
+      var b = geral.bloqueios;
       A.faixa('faixa', [
+        b.length
+          ? { k: 'Travando a grade', v: b.length, destaque: true,
+              n: b.map(function (x) { return x.titulo; }).slice(0, 2).join(' · ') +
+                 (b.length > 2 ? ' e mais ' + (b.length - 2) : '') }
+          : { k: 'Nada travando', v: '&#10003;', destaque: true,
+              n: 'os passos que seguram o roteiro estão resolvidos' },
         { k: 'Preparação concluída', v: geral.pct + '<span class="un">%</span>',
-          destaque: true, vazio: !geral.feitos, barra: geral.pct,
-          n: geral.feitos + ' de ' + geral.total + ' passos' +
-             (geral.feitos === geral.total ? ' — pode abrir o grupo' : '') }
+          vazio: !geral.resolvidos, barra: geral.pct,
+          n: geral.resolvidos + ' de ' + geral.total + ' passos' +
+             (geral.parciais ? ' · ' + geral.parciais + ' parcial' + (geral.parciais > 1 ? 'is' : '') : '') +
+             (geral.na ? ' · ' + geral.na + ' não se aplica' : '') }
       ].concat(porBloco.map(function (x) {
         return {
-          k: x.b.nome, v: x.feitos + ' / ' + x.total, vazio: !x.feitos,
-          barra: Math.round(x.feitos / x.total * 100),
-          n: x.feitos === x.total ? 'bloco concluído' : (x.total - x.feitos) + ' em aberto'
+          k: x.b.nome, v: x.resolvidos + ' / ' + x.total, vazio: !x.resolvidos,
+          barra: Math.round(x.resolvidos / x.total * 100),
+          n: x.resolvidos === x.total
+            ? 'bloco concluído'
+            : (x.total - x.resolvidos) + ' em aberto' +
+              (x.contas.parcial ? ' (' + x.contas.parcial + ' parcial)' : '')
         };
       })).concat([
         { k: 'Próximo passo', v: proximo ? '&rarr;' : '&#10003;', vazio: !proximo,

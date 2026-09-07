@@ -94,7 +94,12 @@ function montarLembrete(painel, hoje) {
   const proximas = aquecimento.filter(i => pendente(i) && i.data > hoje && i.data <= limite)
                               .sort((a, b) => a.data.localeCompare(b.data));
 
-  if (!hojeItens.length && !atrasadas.length && !proximas.length) return null;
+  /* Bloqueio conta como motivo para mandar: um passo que trava a grade é
+     urgente mesmo num dia sem gravação marcada. */
+  const prep = progressoChecklists(d.preparacao);
+  if (!hojeItens.length && !atrasadas.length && !proximas.length && !prep.bloqueios.length) {
+    return null;
+  }
 
   const faltam = Math.round(
     (new Date(abertura + 'T12:00:00Z') - new Date(hoje + 'T12:00:00Z')) / 86400000
@@ -141,9 +146,14 @@ function montarLembrete(painel, hoje) {
     });
   }
 
-  const prep = progressoChecklists(d.preparacao);
-  if (prep.feitos < prep.total) {
-    linhas.push('', '*Preparação* ' + prep.feitos + ' de ' + prep.total + ' passos');
+  /* Bloqueio é a informação mais acionável do lembrete: enquanto estiver
+     aberto, gravar story não adianta porque a frase de fechamento não fecha. */
+  if (prep.bloqueios.length) {
+    linhas.push('', '*Travando a grade*');
+    prep.bloqueios.forEach(b => linhas.push('• ' + b.titulo +
+      (b.estado === 'parcial' ? ' _(parcial)_' : '')));
+  } else if (prep.resolvidos < prep.total) {
+    linhas.push('', '*Preparação* ' + prep.resolvidos + ' de ' + prep.total + ' passos');
   }
 
   linhas.push('', SITE + '/' + painel.slug + '/');

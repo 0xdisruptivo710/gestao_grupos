@@ -773,16 +773,29 @@
     el = typeof el === 'string' ? document.getElementById(el) : el;
     if (!el) return;
 
+    var ESTADOS = window.ESTADOS_PREP;
+
     function pinta() {
       el.innerHTML = bloco.passos.map(function (p) {
         var e = S.prep(p.id);
-        return '<div class="chk-item' + (e.feito ? ' feito' : '') + '" data-p="' + p.id + '">' +
-          '<label class="chk-marca">' +
-            '<input type="checkbox"' + (e.feito ? ' checked' : '') + ' data-chk="' + p.id + '" ' +
-              'aria-label="' + A.esc(p.titulo) + '">' +
-          '</label>' +
+        var estado = S.estadoPrep(p.id);
+        var trava = p.trava && (estado === 'pendente' || estado === 'parcial');
+
+        return '<div class="chk-item e-' + estado + (trava ? ' travando' : '') +
+            '" data-p="' + p.id + '">' +
+          '<div class="chk-estado">' +
+            '<select class="cell" data-est="' + p.id + '" ' +
+              'aria-label="Estado de ' + A.esc(p.titulo) + '">' +
+              ESTADOS.map(function (op) {
+                return '<option value="' + op.id + '"' +
+                  (op.id === estado ? ' selected' : '') + '>' + op.nome + '</option>';
+              }).join('') +
+            '</select>' +
+          '</div>' +
           '<div class="chk-txt">' +
-            '<b>' + A.esc(p.titulo) + '</b>' +
+            '<b>' + A.esc(p.titulo) +
+              (p.trava ? '<span class="chk-trava" title="Sem este passo não há roteiro para gerar">trava a grade</span>' : '') +
+            '</b>' +
             '<p>' + A.esc(p.ajuda) + '</p>' +
             (e.obs
               ? '<div class="chk-obs"><input class="input" data-obs="' + p.id + '" value="' +
@@ -790,18 +803,19 @@
               : '<button class="chk-add" data-add-obs="' + p.id + '">+ anotar</button>') +
           '</div>' +
           '<div class="chk-quem">' +
-            (e.feito && e.quem
-              ? '<span class="badge ok">' + A.esc(e.quem) + '</span>' +
+            (estado !== 'pendente' && e.quem
+              ? '<span class="badge ' + (estado === 'feito' ? 'ok' : estado === 'parcial' ? 'warn' : '') + '">' +
+                  A.esc(e.quem) + '</span>' +
                 '<span class="small muted">' + (e.quando ? A.quando(e.quando) : '') + '</span>'
               : '') +
           '</div>' +
         '</div>';
       }).join('');
 
-      el.querySelectorAll('[data-chk]').forEach(function (c) {
-        c.addEventListener('change', function () {
-          var passo = acha(c.dataset.chk);
-          S.marcarPrep(c.dataset.chk, c.checked, passo.titulo, bloco.nome);
+      el.querySelectorAll('[data-est]').forEach(function (sel) {
+        sel.addEventListener('change', function () {
+          var passo = acha(sel.dataset.est);
+          S.mudarPrep(sel.dataset.est, sel.value, passo.titulo, bloco.nome);
           S.salvar(); pinta();
           if (aoMudar) aoMudar();
         });

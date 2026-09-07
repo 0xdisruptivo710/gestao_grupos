@@ -325,23 +325,48 @@ button { cursor: pointer; background: none; border: 0; }
 /* ---------- 6f. Checklist ------------------------------------------------
    Um passo por linha. A ajuda fica embaixo do título em cinza, porque quem
    está fazendo pela primeira vez precisa dela e quem já fez passa direto.
+
+   O estado é um seletor de quatro opções, não uma caixa de marcar: com dois
+   estados só, "parcial" vira mentira e "não se aplica" prende o painel abaixo
+   de 100% para sempre. A cor da borda esquerda diz o estado de longe.
    ----------------------------------------------------------------------- */
 .chk-item {
-  display: grid; grid-template-columns: 26px minmax(0, 1fr) auto;
+  display: grid; grid-template-columns: 136px minmax(0, 1fr) auto;
   gap: 14px; align-items: start;
-  padding: 14px 18px; border-bottom: 1px solid var(--border);
+  padding: 14px 18px 14px 15px; border-bottom: 1px solid var(--border);
+  border-left: 3px solid transparent;
 }
 .chk-item:last-child { border-bottom: 0; }
 .chk-item:hover { background: var(--surface-2); }
-.chk-marca { padding-top: 1px; }
-.chk-marca input {
-  width: 19px; height: 19px; accent-color: var(--accent); cursor: pointer;
-}
+.chk-estado select { width: 100%; font-size: 13px; }
+
 .chk-txt { min-width: 0; }
 .chk-txt b { font-size: 14px; font-weight: 500; display: block; }
 .chk-txt p { font-size: 12.5px; color: var(--muted); margin-top: 3px; max-width: 78ch; }
-.chk-item.feito .chk-txt b { color: var(--muted); text-decoration: line-through; text-decoration-thickness: 1px; }
 .chk-quem { display: grid; gap: 3px; justify-items: end; text-align: right; white-space: nowrap; }
+
+/* estado pela borda: dá para varrer a coluna sem ler nada */
+.chk-item.e-feito   { border-left-color: var(--success); }
+.chk-item.e-parcial { border-left-color: var(--warn); }
+.chk-item.e-na      { border-left-color: var(--border); }
+.chk-item.e-feito .chk-txt b {
+  color: var(--muted); text-decoration: line-through; text-decoration-thickness: 1px;
+}
+.chk-item.e-na .chk-txt b { color: var(--muted); }
+.chk-item.e-na .chk-txt p { opacity: .55; }
+
+/* "trava a grade": enquanto não resolver, não há roteiro para gerar */
+.chk-trava {
+  display: inline-block; margin-left: 8px; padding: 1px 7px; border-radius: 999px;
+  font-size: 10.5px; font-weight: 600; letter-spacing: .04em; text-transform: uppercase;
+  background: var(--danger-bg); color: var(--danger); vertical-align: 1px;
+}
+.chk-item.travando { background: #FFF9F9; border-left-color: var(--danger); }
+.chk-item.travando:hover { background: #FFF3F3; }
+/* resolvido, o alerta cala: o passo continua importante, mas não é mais fila */
+.chk-item.e-feito .chk-trava, .chk-item.e-na .chk-trava {
+  background: var(--surface-2); color: var(--border);
+}
 
 .chk-add {
   margin-top: 7px; font-size: 12px; color: var(--muted);
@@ -704,9 +729,10 @@ select.cell { appearance: none; cursor: pointer; padding-right: 20px; background
   .faixa > div:nth-child(2n) { box-shadow: -1px 0 0 var(--border); }
   .faixa .destaque { grid-column: 1 / -1; }
 
-  /* O nome de quem marcou vai para baixo do passo. */
-  .chk-item { grid-template-columns: 26px minmax(0, 1fr); }
-  .chk-quem { grid-column: 2; justify-items: start; text-align: left; margin-top: 6px; }
+  /* O seletor sobe para cima do título e a assinatura desce. */
+  .chk-item { grid-template-columns: minmax(0, 1fr); gap: 8px; }
+  .chk-estado select { max-width: 190px; }
+  .chk-quem { justify-items: start; text-align: left; }
 
   /* A etapa empilha: bolinha + nome em cima, estado embaixo. */
   .etapa { grid-template-columns: 30px minmax(0, 1fr) auto; gap: 12px; }

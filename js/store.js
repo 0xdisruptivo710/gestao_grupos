@@ -314,23 +314,40 @@
      ----------------------------------------------------------------------- */
   S.prep = function (id) {
     if (!S.dados.preparacao) S.dados.preparacao = {};
-    return S.dados.preparacao[id] || { feito: false, obs: '', quem: '', quando: '' };
+    return S.dados.preparacao[id] || { estado: 'pendente', obs: '', quem: '', quando: '' };
   };
 
-  S.marcarPrep = function (id, feito, rotulo, area) {
+  /* O estado de um passo, já traduzido do formato antigo ({ feito: true }). */
+  S.estadoPrep = function (id) {
+    var fn = (typeof window !== 'undefined' && window.estadoPrepDe);
+    var reg = (S.dados.preparacao || {})[id];
+    return fn ? fn(reg) : (reg && reg.estado) || (reg && reg.feito ? 'feito' : 'pendente');
+  };
+
+  /* Quatro estados no lugar da caixa de marcar. Guarda quem mexeu e quando,
+     porque numa operação de duas equipes “está feito” sem assinatura vira
+     discussão. Voltar para pendente limpa a assinatura: assinatura de estado
+     que não vale mais confunde mais do que ajuda. */
+  S.mudarPrep = function (id, estado, rotulo, area) {
     if (!S.dados.preparacao) S.dados.preparacao = {};
-    var p = S.dados.preparacao[id] || { feito: false, obs: '' };
-    if (p.feito === feito) return;
-    p.feito = feito;
-    p.quem = feito ? S.usuario().nome : '';
-    p.quando = feito ? new Date().toISOString() : '';
+    var p = S.dados.preparacao[id] || { obs: '' };
+    var antes = S.estadoPrep(id);
+    if (antes === estado) return;
+
+    p.estado = estado;
+    delete p.feito;                       // não deixa os dois formatos brigando
+    if (estado === 'pendente') { p.quem = ''; p.quando = ''; }
+    else { p.quem = S.usuario().nome; p.quando = new Date().toISOString(); }
     S.dados.preparacao[id] = p;
-    S.log(area || 'Preparação', (feito ? 'concluiu' : 'reabriu') + ' “' + rotulo + '”');
+
+    var NOMES = { pendente: 'pendente', parcial: 'parcial', feito: 'feito', na: 'não se aplica' };
+    S.log(area || 'Preparação',
+      'mudou “' + rotulo + '” de ' + (NOMES[antes] || antes) + ' para ' + (NOMES[estado] || estado));
   };
 
   S.obsPrep = function (id, obs, rotulo, area) {
     if (!S.dados.preparacao) S.dados.preparacao = {};
-    var p = S.dados.preparacao[id] || { feito: false, obs: '' };
+    var p = S.dados.preparacao[id] || { estado: 'pendente', obs: '' };
     if ((p.obs || '') === obs) return;
     p.obs = obs;
     S.dados.preparacao[id] = p;

@@ -182,10 +182,17 @@
       A.etapas('etapas', [
         {
           nome: 'Preparação', href: 'preparacao.html', icone: 'check-list',
-          estado: !prep.feitos ? 'parada' : (prep.feitos === prep.total ? 'feita' : 'andando'),
-          texto: prep.feitos
-            ? prep.feitos + ' de ' + prep.total + ' passos · canal oficial e base de contatos'
-            : 'canal oficial e base de contatos ainda não começaram',
+          estado: !prep.resolvidos ? 'parada'
+                : (prep.resolvidos === prep.total ? 'feita' : 'andando'),
+          /* Bloqueio na frente: 18 de 26 passos parece bom, mas se um dos que
+             travam a grade está aberto, não há roteiro para gerar. */
+          texto: prep.bloqueios.length
+            ? prep.bloqueios.length + (prep.bloqueios.length === 1 ? ' passo trava' : ' passos travam') +
+              ' a grade: ' + prep.bloqueios[0].titulo.toLowerCase() +
+              (prep.bloqueios.length > 1 ? ' e mais ' + (prep.bloqueios.length - 1) : '')
+            : (prep.resolvidos
+                ? prep.resolvidos + ' de ' + prep.total + ' passos · nada travando'
+                : 'definições, canal oficial e base de contatos ainda não começaram'),
           num: prep.pct + '%'
         },
         {
@@ -281,9 +288,12 @@
        e para quantas pessoas, depois o que vender, depois como encher o grupo. */
     function primeiroPasso(d, t) {
       var prep = window.progressoChecklists(d.preparacao);
-      if (!prep.feitos) return {
-        titulo: 'Comece pela preparação',
-        texto: 'Sem canal oficial no ar e base de contatos tratada não há disparo. São os dois checklists que abrem a campanha.',
+      if (prep.bloqueios.length) return {
+        titulo: prep.bloqueios.length === 1
+          ? 'Um passo está travando a grade'
+          : prep.bloqueios.length + ' passos estão travando a grade',
+        texto: 'Enquanto não resolver, não há roteiro para gerar: ' +
+               prep.bloqueios.map(function (x) { return x.titulo.toLowerCase(); }).join(', ') + '.',
         href: 'preparacao.html', acao: 'Abrir Preparação'
       };
       if (!d.grupo.abertura) return {
