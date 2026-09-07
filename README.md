@@ -66,21 +66,51 @@ linha no banco, não uma lista no código.
 
 ## Preparação
 
-`Preparação` é a primeira tela do menu e traz dois checklists, iguais para todo
+`Preparação` é a primeira tela do menu e traz três checklists, iguais para todo
 cliente:
 
+- **Definições da campanha** — vertical, quem grava, Instagram, autorização de
+  imagem, time do dia, data e horário confirmados. São as decisões que
+  destravam o resto e o que o roteiro pede entre colchetes.
 - **Canal oficial no ar** — BM verificada, chip novo, WABA, cartão na BM,
   perfil, limite de envio, conexão com o CRM, templates, teste ponta a ponta e
-  link do grupo. Feito uma vez por cliente.
-- **Base de contatos e campanhas** — extração, normalização, cruzamento com
-  quem já comprou, exclusão de quem já está no grupo, segmentação, ondas, copy,
-  etiqueta de origem, disparo teste e acompanhamento. Feito a cada campanha.
+  grupo de pacientes criado. Feito uma vez por cliente.
+- **Base de contatos e campanhas** — extração e tamanho, normalização,
+  cruzamento com quem já comprou, exclusão de quem já está no grupo,
+  segmentação, ondas, copy, etiqueta de origem, disparo teste e
+  acompanhamento. Feito a cada campanha.
 
 Os passos moram em `js/checklists.js`, porque são o procedimento da casa e não
 uma lista que cada painel inventa: mexer lá muda o checklist de todos os
-painéis. O que fica no banco é só o estado de cada passo — feito, quem marcou,
-quando e a anotação. Marcar registra a assinatura porque, numa operação de duas
-equipes, "está feito" sem nome vira discussão.
+painéis. O que fica no banco é só o estado de cada passo — estado, quem mexeu,
+quando e a anotação.
+
+### Quatro estados, não uma caixa de marcar
+
+`pendente` → `parcial` → `feito`, mais `não se aplica`. Com dois estados só,
+"parcial" vira mentira (marca como feito) ou some (fica pendente para sempre),
+e um passo que não vale para aquela clínica prende o painel abaixo de 100%
+eternamente. **Resolvido = feito + não se aplica**, e é isso que vira
+porcentagem.
+
+Painel gravado no formato antigo (`{ feito: true }`) continua lendo como feito.
+Não precisa migrar nada.
+
+### Trava a grade
+
+Cinco passos têm `trava: true`: data e horário confirmados, vertical,
+Instagram, grupo de pacientes e tamanho da base. Sem eles não há roteiro para
+gerar — a frase de fechamento de todo story precisa de data e hora, e o link do
+grupo vai em todos.
+
+Eles aparecem em vermelho na lista, em primeiro lugar na faixa, na linha do
+tempo da Visão geral e no lembrete diário. **Parcial continua travando**: "API
+ligada, número em branco" não gera roteiro nenhum.
+
+De onde veio: a auditoria da Spazio Anderla Michele (09/2026), que separou "o
+que trava a grade" de "o que não trava" e fechou em 26 feito, 14 parcial, 40
+pendente e 28 não usar — três estados que o checklist antigo não sabia
+representar.
 
 ## Conteúdo de aquecimento
 
