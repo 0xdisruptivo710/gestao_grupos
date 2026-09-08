@@ -207,20 +207,20 @@ module.exports = async (req, res) => {
          mesma resposta, sem precisar buscar o texto num nó anterior: uma etapa
          a menos para dar errado, e o que foi reservado é exatamente o que vai
          ser postado. */
-      let grupo = null, texto = null;
+      let grupo = null, texto = null, cliente = null;
       if (reservado) {
         const rp = await rest('gvip_paineis?select=slug,cliente,dados&slug=eq.' +
                               encodeURIComponent(slug));
         if (rp.ok) {
           const [painel] = await rp.json();
           const l = painel && montarLembrete(painel, hoje);
-          if (l) { grupo = painel.dados.grupo.grupoOperacao; texto = l.texto; }
+          if (l) { grupo = painel.dados.grupo.grupoOperacao; texto = l.texto; cliente = painel.cliente; }
         }
       }
 
       /* reservado=false: já existia reserva para hoje. Não é erro, é a proteção
          funcionando. O n8n lê `reservado` e só envia se for true. */
-      return res.status(200).json({ reservado, slug, dia: hoje, grupo, texto });
+      return res.status(200).json({ reservado, slug, dia: hoje, cliente, grupo, texto });
     }
 
     if (req.method !== 'GET') {
