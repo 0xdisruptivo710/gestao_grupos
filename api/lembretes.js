@@ -201,10 +201,26 @@ module.exports = async (req, res) => {
       });
       if (!r.ok) throw new Error('reserva falhou: ' + (await r.text()));
       const linhas = await r.json();
+      const reservado = linhas.length > 0;
 
-      /* Lista vazia = já existia reserva para hoje. Não é erro: é a proteção
+      /* Devolve o texto junto com a reserva. Assim o n8n manda o que veio desta
+         mesma resposta, sem precisar buscar o texto num nó anterior: uma etapa
+         a menos para dar errado, e o que foi reservado é exatamente o que vai
+         ser postado. */
+      let grupo = null, texto = null;
+      if (reservado) {
+        const rp = await rest('gvip_paineis?select=slug,cliente,dados&slug=eq.' +
+                              encodeURIComponent(slug));
+        if (rp.ok) {
+          const [painel] = await rp.json();
+          const l = painel && montarLembrete(painel, hoje);
+          if (l) { grupo = painel.dados.grupo.grupoOperacao; texto = l.texto; }
+        }
+      }
+
+      /* reservado=false: já existia reserva para hoje. Não é erro, é a proteção
          funcionando. O n8n lê `reservado` e só envia se for true. */
-      return res.status(200).json({ reservado: linhas.length > 0, slug, dia: hoje });
+      return res.status(200).json({ reservado, slug, dia: hoje, grupo, texto });
     }
 
     if (req.method !== 'GET') {
