@@ -277,7 +277,25 @@ module.exports = async (req, res) => {
       });
     }
 
-    return res.status(200).json({ dia: hoje, total: lista.length, lembretes: lista });
+    /* Lista vazia sem explicação faz o nó do n8n parecer quebrado — foi o que
+       aconteceu em 09/09, quando alguém olhou o nó depois do envio do dia e
+       concluiu que a rota não existia. Então a resposta sempre diz POR QUE
+       está vazia. */
+    let motivo = null;
+    if (!lista.length) {
+      const jaHoje = paineis.filter(p => jaEnviados.includes(p.slug)).length;
+      const semGrupo = paineis.filter(p => !p.dados?.grupo?.grupoOperacao).length;
+      const semData = paineis.filter(p => p.dados?.grupo?.grupoOperacao && !p.dados?.grupo?.abertura).length;
+      motivo = jaHoje
+        ? jaHoje + (jaHoje === 1 ? ' cliente já recebeu' : ' clientes já receberam') +
+          ' o lembrete hoje. Use ?todos=1 para ver o que foi mandado.'
+        : 'Nenhum cliente com lembrete hoje: ' + semGrupo + ' sem grupo preenchido, ' +
+          semData + ' sem data de abertura, e o resto sem gravação hoje, atraso ou bloqueio.';
+    }
+
+    return res.status(200).json({
+      dia: hoje, total: lista.length, motivo, jaEnviadosHoje: jaEnviados, lembretes: lista
+    });
   } catch (e) {
     return res.status(500).json({ erro: 'falha', detalhe: String(e.message || e) });
   }
