@@ -113,28 +113,43 @@
   S.pronto(function () {
     if (S.semCliente) return;
 
-    A.tabela({
+    /* Cartão, não linha só de número. Combo tem conteúdo: o que vem dentro,
+       quantas sessões, qual brinde. Isso é o que a equipe copia para o grupo
+       no dia, e antes não tinha onde morar. */
+    A.cards({
       el: 'tab-produtos',
       nome: 'produtos',
       area: 'Promoções',
       rotulo: function (i) { return i.nome || 'produto sem nome'; },
+      kicker: function (i) { return i.publico || 'sem público definido'; },
       rotuloNovo: 'Adicionar produto',
       vazio: 'Nenhum produto na oferta do grupo.',
       colunas: [
-        { k: 'nome',    label: 'Produto',        tipo: 'texto', largura: '34%' },
-        { k: 'publico', label: 'Público',        tipo: 'texto', largura: '22%' },
-        { k: 'tabela',  label: 'Valor tabela',   tipo: 'brl',   largura: '15%' },
-        { k: 'vip',     label: 'Valor no grupo', tipo: 'brl',   largura: '15%' },
-        { k: 'desc',    label: 'Desconto',       tipo: 'calc',  largura: '14%',
-          calc: function (i) { return i.tabela ? '−' + Math.round((1 - i.vip / i.tabela) * 100) + '%' : '—'; } }
+        { label: 'Produto',        largura: '42%' },
+        { label: 'Anexos',         largura: '8%' },
+        { label: 'De',             largura: '14%', ta: 'r' },
+        { label: 'Por',            largura: '14%', ta: 'r' },
+        { label: 'Desconto',       largura: '12%', ta: 'r' }
       ],
-      novo: function () { return { nome: '', publico: '', tabela: 0, vip: 0 }; },
-      total: function (itens) {
-        var vip = itens.map(function (p) { return Number(p.vip) || 0; }).filter(Boolean);
-        var medio = vip.length ? vip.reduce(function (a, b) { return a + b; }, 0) / vip.length : 0;
-        return '<td colspan="3"><b>Valor médio no grupo</b></td>' +
-          '<td class="ta-r">' + A.brl(medio) + '</td><td></td>';
+      linha: function (i) {
+        var desc = i.tabela ? '−' + Math.round((1 - i.vip / i.tabela) * 100) + '%' : '—';
+        var primeira = String(i.descricao || '').trim().split(String.fromCharCode(10)).filter(Boolean)[0] || '';
+        return '<td><div class="titulo">' + (A.esc(i.nome) || '<span class="muted">Sem nome</span>') + '</div>' +
+            '<div class="resumo">' + (A.esc(primeira) || A.esc(i.publico) || 'sem descrição') + '</div></td>' +
+          '<td>' + A.chipMidia(i) + '</td>' +
+          '<td class="ta-r"><span class="num small">' + (i.tabela ? A.brl(i.tabela) : '—') + '</span></td>' +
+          '<td class="ta-r"><span class="num small">' + A.brl(i.vip) + '</span></td>' +
+          '<td class="ta-r"><span class="num small">' + desc + '</span></td>';
       },
+      campos: [
+        [{ k: 'nome', label: 'Produto', tipo: 'texto', placeholder: 'Ex.: Combo Day Imunidade' },
+         { k: 'publico', label: 'Público', dica: 'para quem é', tipo: 'texto' }],
+        { k: 'descricao', label: 'O que está incluso', dica: 'o texto que vai ao grupo',
+          tipo: 'textarea', alto: true, preview: true },
+        [{ k: 'tabela', label: 'Valor de tabela (De)', dica: 'deixe 0 se não houver', tipo: 'brl' },
+         { k: 'vip', label: 'Valor no grupo (Por)', tipo: 'brl' }]
+      ],
+      novo: function () { return { nome: '', publico: '', descricao: '', tabela: 0, vip: 0, midias: [] }; },
       aoMudar: pinta
     });
 
