@@ -194,6 +194,28 @@ module.exports = async (req, res) => {
       const slug = (corpo.slug || '').toString();
       if (!/^[a-z0-9-]{2,40}$/.test(slug)) return res.status(400).json({ erro: 'slug_invalido' });
 
+      /* Devolver o dia quando o envio falhou.
+
+         Reservar antes de enviar protege contra mandar duas vezes, mas sozinho
+         tem um custo: se o envio quebrar, o lembrete do dia se perde calado.
+         Foi o que aconteceu em 09/09/2026 — a instância da Evolution piscou
+         ("Connection Closed"), os quatro clientes ficaram reservados e nenhuma
+         mensagem saiu.
+
+         Só liberar em falha de REQUISIÇÃO (a API recusou, nada foi enviado).
+         Nunca em status de entrega ambíguo: o ERROR do MessageUpdate não prova
+         que a mensagem não chegou, e liberar nesse caso duplicaria. */
+      if (corpo.liberar) {
+        const r = await rest('gvip_lembretes?slug=eq.' + encodeURIComponent(slug) +
+                             '&dia=eq.' + hoje, {
+          method: 'DELETE',
+          headers: { Prefer: 'return=representation' }
+        });
+        if (!r.ok) throw new Error('liberação falhou: ' + (await r.text()));
+        const apagadas = await r.json();
+        return res.status(200).json({ liberado: apagadas.length > 0, slug, dia: hoje });
+      }
+
       const r = await rest('gvip_lembretes?on_conflict=slug,dia', {
         method: 'POST',
         headers: { Prefer: 'return=representation,resolution=ignore-duplicates' },
