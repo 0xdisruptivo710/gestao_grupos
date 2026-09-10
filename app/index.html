@@ -78,6 +78,17 @@
           <input class="input" id="p-grupo-op" placeholder="120363000000000000@g.us">
           <p class="small muted" style="margin-top:2px" id="p-grupo-op-nota"></p>
         </div>
+
+        <!-- Dois campos separados de propósito. São grupos diferentes, com
+             gente diferente dentro: o de organização tem a equipe, o VIP tem
+             os pacientes. Trocar um pelo outro manda a oferta para a sala
+             errada, ou o recado interno para centenas de pessoas. -->
+        <div class="field" style="margin-top:14px">
+          <label for="p-grupo-vip">Grupo VIP no WhatsApp
+            <span class="dica">o dos pacientes, onde as ofertas são postadas</span></label>
+          <input class="input" id="p-grupo-vip" placeholder="120363000000000000@g.us">
+          <p class="small muted" style="margin-top:2px" id="p-grupo-vip-nota"></p>
+        </div>
       </section>
 
       <!-- A campanha em ordem, não um mosaico de caixas -->
@@ -139,7 +150,8 @@
     A.campo(document.getElementById('p-meta'),     'grupo', 'metaMembros', 'Parâmetros', 'meta de membros', pinta);
     A.campo(document.getElementById('p-saidas'),   'grupo', 'saidas', 'Parâmetros', 'saídas do grupo', pinta);
     A.campo(document.getElementById('p-vagas'),    'grupo', 'metaVendas', 'Parâmetros', 'meta de vendas na abertura', pinta);
-    A.campo(document.getElementById('p-grupo-op'), 'grupo', 'grupoOperacao', 'Parâmetros', 'grupo de organização no WhatsApp', pinta);
+    A.campo(document.getElementById('p-grupo-op'),  'grupo', 'grupoOperacao', 'Parâmetros', 'grupo de organização no WhatsApp', pinta);
+    A.campo(document.getElementById('p-grupo-vip'), 'grupo', 'grupoVip',      'Parâmetros', 'grupo VIP no WhatsApp', pinta);
 
     pinta();
 
@@ -164,6 +176,16 @@
         : (d.grupo.abertura
             ? 'O lembrete das gravações do dia é postado neste grupo toda manhã.'
             : 'Falta a data da abertura: sem ela o calendário não tem dia e o lembrete não sai.');
+
+      /* Avisa quando os dois campos têm o mesmo JID. É o erro que mais custa
+         caro aqui: o disparo das ofertas passa a cair no grupo da equipe, ou o
+         lembrete interno vai para todos os pacientes. */
+      var notaVip = document.getElementById('p-grupo-vip-nota');
+      notaVip.textContent = !d.grupo.grupoVip
+        ? 'Sem o grupo VIP preenchido, o disparo das ofertas não roda para este cliente.'
+        : (d.grupo.grupoVip === d.grupo.grupoOperacao
+            ? 'Atenção: é o mesmo JID do grupo de organização. São grupos diferentes — confira qual é o dos pacientes.'
+            : 'As ofertas do carrinho são postadas neste grupo.');
 
       /* ---------- próximo passo ----------
          Uma frase só, a primeira que estiver faltando. Some quando a campanha

@@ -51,8 +51,16 @@
         /* JID do grupo de organização no WhatsApp (o da equipe, não o dos
            pacientes). É para onde o lembrete diário é postado. Sem isto o
            cliente simplesmente não entra na rotina de lembrete. */
-        grupoOperacao: ''
+        grupoOperacao: '',
+        /* JID do grupo VIP, o dos pacientes. É para onde as ofertas do
+           carrinho vão. Campo separado, e nunca com queda de um para o outro:
+           são salas com público diferente, e trocar significa mandar oferta
+           para a equipe ou recado interno para centenas de pacientes. */
+        grupoVip: ''
       },
+      /* Janelas do carrinho: [{ id, titulo, produtos:[id], abertura, fechamento }].
+         Vazio = o disparo cai numa janela única com todos os produtos. */
+      janelas: [],
       /* Checklists de preparação. Os passos são fixos (moram em app.js, para
          valerem igual em todo cliente); aqui fica só o estado de cada um:
          { 'wa-1': { feito: true, quem: 'Equipe AIOS', quando: '...', obs: '' } } */
