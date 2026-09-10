@@ -267,7 +267,9 @@
 
     /* ---------- aquecimento ---------- */
     document.getElementById('t-aquecimento').innerHTML = d.aquecimento.length ? d.aquecimento.map(function (i) {
-      var cls = i.status === 'Enviado' ? 'ok' : i.status === 'Cancelado' ? 'danger' : 'info';
+      var cls = i.status === 'Enviado' ? 'ok'
+          : i.status === 'Gravado' ? 'warn'
+          : i.status === 'Cancelado' ? 'danger' : 'info';
       return '<tr><td class="num small">' + A.dataBR(i.data) + '</td>' +
         '<td><span class="badge">' + A.esc(i.tipo) + '</span></td>' +
         '<td class="small">' + (A.esc(i.titulo) || VAZIO) + '</td>' +

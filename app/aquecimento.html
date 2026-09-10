@@ -68,7 +68,13 @@
      últimos são o que puxa gente para o grupo, publicado no Instagram — é onde
      entram os roteiros de story que a clínica recebe pronto. */
   var TIPOS = ['Mensagem', 'Foto', 'Vídeo', 'Enquete', 'Story', 'Reel', 'Arte'];
-  var STATUS = ['Planejado', 'Enviado', 'Cancelado'];
+  /* "Gravado" existe porque Planejado queria dizer duas coisas muito
+     diferentes: "ainda não gravei" e "já gravei, falta postar". Num aquecimento
+     essa é a distinção que importa — quem cobra gravação precisa saber o que
+     ainda não existe, e quem publica precisa saber o que já está pronto na
+     pasta. O lembrete diário usa isso: só cobra gravação do que está Planejado,
+     e avisa separado o que está Gravado esperando ir ao ar. */
+  var STATUS = ['Planejado', 'Gravado', 'Enviado', 'Cancelado'];
 
   var filtro = '';   // '' = todos
 
@@ -93,7 +99,9 @@
         { label: 'Respostas', largura: '13%', ta: 'r' }
       ],
       linha: function (i) {
-        var cls = i.status === 'Enviado' ? 'ok' : i.status === 'Cancelado' ? 'danger' : 'info';
+        var cls = i.status === 'Enviado' ? 'ok'
+          : i.status === 'Gravado' ? 'warn'
+          : i.status === 'Cancelado' ? 'danger' : 'info';
         var tx = i.alcance ? Math.round(i.respostas / i.alcance * 100) + '%' : '—';
         return '<td><span class="num small">' + (i.data ? A.dataBR(i.data) : '—') + ' · ' + A.esc(i.hora) + '</span></td>' +
           '<td><span class="badge">' + A.esc(i.tipo) + '</span></td>' +
@@ -239,6 +247,7 @@
         { k: 'Plano executado', v: t.aqEnviados + ' / ' + itens.length, vazio: !itens.length, barra: pct,
           n: itens.length
             ? pct + '% do que foi planejado já foi ao grupo' +
+              (t.aqGravados ? ' · ' + t.aqGravados + ' já gravados esperando' : '') +
               (cancelados ? ' · ' + cancelados + ' cancelados fora da conta' : '')
             : 'nada planejado ainda' },
         { k: 'Respostas no grupo', v: t.respostas, vazio: !t.respostas,

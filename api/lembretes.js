@@ -66,11 +66,17 @@ const dataBR = iso => (iso || '').slice(0, 10).split('-').reverse().slice(0, 2).
    A REGRA. Devolve o texto do lembrete, ou null quando não há o que dizer.
 
    Prioridade, na ordem em que aparece na mensagem:
-   1. o que gravar hoje       — é o que trava o aquecimento se não sair
-   2. o que ficou para trás   — o mais importante: conteúdo perdido não volta
-   3. o que vem aí            — deixa gravar em lote, que rende mais
-   4. disparos em andamento   — o "o que está sendo feito"
-   5. preparação em aberto    — só quando ainda falta algo
+   1. o que gravar hoje         — é o que trava o aquecimento se não sair
+   2. já gravado, falta publicar — a ação mais barata do dia: o material existe
+   3. o que ficou para trás     — o mais importante: conteúdo perdido não volta
+   4. o que vem aí              — deixa gravar em lote, que rende mais
+   5. disparos em andamento     — o "o que está sendo feito"
+   6. preparação em aberto      — só quando ainda falta algo
+
+   Gravar e publicar são estados diferentes, e o lembrete trata assim: item em
+   "Planejado" ainda precisa ser gravado, item em "Gravado" já existe na pasta e
+   só falta subir. Misturar os dois fazia o lembrete cobrar gravação de vídeo
+   pronto, que é o jeito mais rápido de a equipe parar de ler a mensagem.
 
    Mensagem que chega todo dia sem ter o que dizer vira ruído e para de ser
    lida. Por isso: sem gravação hoje, sem atraso e sem nada nos próximos dias,
@@ -94,10 +100,19 @@ function montarLembrete(painel, hoje) {
   const proximas = aquecimento.filter(i => pendente(i) && i.data > hoje && i.data <= limite)
                               .sort((a, b) => a.data.localeCompare(b.data));
 
+  /* Já gravado, esperando ir ao ar. Fica fora de "gravar hoje" e de "ficou para
+     trás" de propósito: cobrar gravação de vídeo que já está na pasta faz o
+     lembrete perder credibilidade, e é o jeito mais rápido de a equipe começar
+     a ignorar a mensagem inteira. Mas também não pode sumir, senão material
+     gravado morre sem ser publicado. Por isso tem bloco próprio. */
+  const publicar = aquecimento.filter(i => i.status === 'Gravado' && i.data && i.data <= hoje)
+                              .sort((a, b) => a.data.localeCompare(b.data));
+
   /* Bloqueio conta como motivo para mandar: um passo que trava a grade é
      urgente mesmo num dia sem gravação marcada. */
   const prep = progressoChecklists(d.preparacao);
-  if (!hojeItens.length && !atrasadas.length && !proximas.length && !prep.bloqueios.length) {
+  if (!hojeItens.length && !atrasadas.length && !proximas.length &&
+      !publicar.length && !prep.bloqueios.length) {
     return null;
   }
 
@@ -114,6 +129,16 @@ function montarLembrete(painel, hoje) {
   if (hojeItens.length) {
     linhas.push('', '*Gravar hoje (' + dataBR(hoje) + ')*');
     hojeItens.forEach(i => linhas.push('• ' + i.tipo + ' · ' + i.titulo));
+  }
+
+  if (publicar.length) {
+    linhas.push('', '*Já gravado, falta publicar — ' + publicar.length +
+      (publicar.length === 1 ? ' item*' : ' itens*'));
+    publicar.slice(0, MAX_ATRASADAS).forEach(i =>
+      linhas.push('• ' + dataBR(i.data) + ' · ' + i.titulo));
+    if (publicar.length > MAX_ATRASADAS) {
+      linhas.push('• e mais ' + (publicar.length - MAX_ATRASADAS) + ' no painel');
+    }
   }
 
   /* O bloco que o cliente mais pediu: nada de conteúdo ficar para trás sem
@@ -162,6 +187,7 @@ function montarLembrete(painel, hoje) {
     texto: linhas.join('\n'),
     resumo: [
       hojeItens.length + ' hoje',
+      publicar.length + ' a publicar',
       atrasadas.length + ' atrasadas',
       proximas.length + ' próximas'
     ].join(' · ')

@@ -424,6 +424,9 @@
        calendário real tem 10, e joga a execução do plano para baixo de graça. */
     var aqVivos = d.aquecimento.filter(function (x) { return x.status !== 'Cancelado'; });
     var aqEnviados = d.aquecimento.filter(function (x) { return x.status === 'Enviado'; });
+    /* Gravado mas ainda não publicado. É o material que já custou o trabalho
+       de produzir e ainda não rendeu nada: o número que mais dói ver alto. */
+    var aqGravados = d.aquecimento.filter(function (x) { return x.status === 'Gravado'; });
     var alcance = soma(aqEnviados, 'alcance');
     var respostas = soma(aqEnviados, 'respostas');
 
@@ -463,6 +466,7 @@
 
       aqTotal: aqVivos.length,
       aqCancelados: d.aquecimento.length - aqVivos.length,
+      aqGravados: aqGravados.length,
       aqEnviados: aqEnviados.length,
       alcance: alcance,
       respostas: respostas,
