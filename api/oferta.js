@@ -128,6 +128,22 @@ function montarJanela(painel, janelaId, hoje, jaEnviadas) {
     return { erro: 'janela_desconhecida', detalhe: 'Janelas: ' + janelas.map(x => x.id).join(', ') };
   }
 
+  /* Janela com data só roda no dia dela.
+
+     O gatilho é um cron, e cron erra: expressão trocada, workflow reativado
+     meses depois, alguém clicando "Execute workflow" para ver o que acontece.
+     Qualquer um desses despeja a oferta de abertura em centenas de pacientes
+     no dia errado. A data é a trava, e ela vive no painel junto da janela.
+
+     Janela sem data (as reaberturas, que são reação ao grupo e não relógio)
+     não tem essa restrição: é a equipe que decide a hora, à mão. */
+  if (j.data && j.data !== hoje) {
+    return {
+      erro: 'fora_do_dia',
+      detalhe: 'A janela ' + j.id + ' é do dia ' + j.data + ' e hoje é ' + hoje + '.'
+    };
+  }
+
   const porId = Object.fromEntries((d.produtos || []).map(p => [p.id, p]));
   const escolhidos = (j.produtos || []).map(id => porId[id]).filter(Boolean);
 
